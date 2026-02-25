@@ -57,7 +57,18 @@
             instance="com.todoplus.settings.TodoSettingsConfigurable"
             id="com.todoplus.settings.TodoSettingsConfigurable"
             displayName="TODO++"/>
+            
+        <!-- Live Templates -->
+        <defaultLiveTemplates file="/liveTemplates/todo-plus.xml"/>
+        
+        <!-- Quick Fix -->
+        <intentionAction>
+            <className>com.todoplus.actions.UpgradeTodoIntention</className>
+            <category>TODO++</category>
+            <descriptionDirectoryName>UpgradeTodoIntention</descriptionDirectoryName>
+        </intentionAction>
     </extensions>
+
     
     <actions>
         <!-- Actions will be added here -->

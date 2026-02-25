@@ -116,6 +116,9 @@ class TodoToolWindowContent(private val project: Project) {
             add(object : AnAction("Export Markdown", "Export TODOs to Markdown file", AllIcons.FileTypes.Text) {
                 override fun actionPerformed(e: AnActionEvent) { exportTodos("md") }
             })
+            add(object : AnAction("Export HTML Dashboard", "Generate and open HTML Dashboard", AllIcons.FileTypes.Html) {
+                override fun actionPerformed(e: AnActionEvent) { exportTodos("html") }
+            })
             addSeparator()
             add(object : AnAction("Clear Filters", "Clear all search filters", AllIcons.Actions.GC) {
                 override fun actionPerformed(e: AnActionEvent) { clearFilters() }
@@ -532,10 +535,16 @@ class TodoToolWindowContent(private val project: Project) {
             val content = when (format) {
                 "csv" -> TodoExporter().exportToCsv(todosToExport)
                 "md" -> TodoExporter().exportToMarkdown(todosToExport)
+                "html" -> TodoExporter().exportToHtml(todosToExport)
                 else -> ""
             }
             
             file.writeText(content)
+            
+            // Auto-open HTML Dashboard
+            if (format == "html") {
+                BrowserUtil.browse(file.toURI().toString())
+            }
             
             NotificationGroupManager.getInstance()
                 .getNotificationGroup("TODO++ Notifications")

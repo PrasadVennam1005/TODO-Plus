@@ -1,0 +1,14 @@
+<templateSet group="todo+">
+  <template name="todo+" value="// TODO(@$USER$ priority:$PRIORITY$): $END$" description="Insert TODO++ formatted comment" toReformat="true" toShortenFQNames="true">
+    <variable name="USER" expression="user()" defaultValue="" alwaysStopAt="false" />
+    <variable name="PRIORITY" expression="enum(&quot;CRITICAL&quot;, &quot;HIGH&quot;, &quot;MEDIUM&quot;, &quot;LOW&quot;)" defaultValue="&quot;HIGH&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="KOTLIN" value="true" />
+      <option name="HTML" value="true" />
+      <option name="XML" value="true" />
+      <option name="JSON" value="true" />
+      <option name="OTHER" value="true" />
+    </context>
+  </template>
+</templateSet>

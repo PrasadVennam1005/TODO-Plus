@@ -57,9 +57,17 @@ Assign TODOs to team members, set priorities, add due dates, and track issues:
 - **Deep Search**: Search by description or specific tags (e.g., `risk:high`).
 - **One-click clear**: Reset all filters instantly.
 
+### ⚡ Live Templates & Quick Fixes
+- **Live Template**: Type `todo+` and press Space or Tab to instantly generate a pre-formatted TODO comment with your username and priority.
+- **Quick Fixes**: Press `Alt+Enter` on any basic `// TODO: ` comment to instantly "Upgrade to TODO++ format", injecting richer metadata.
+
 ### 🚀 Quick Navigation
-- **Double-click** any TODO to jump straight to that line in your code
+- **Double-click** any TODO to jump straight to that line in your code.
 - No more hunting through files!
+
+### 📊 HTML Export Dashboard
+- Export your filtered TODO lists into a beautiful, standalone, offline HTML dashboard with priority metrics and charts.
+- Instantly pops open in your default browser.
 
 
 ### 📦 Installation

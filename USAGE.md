@@ -59,7 +59,15 @@ Add any custom key-value pair you need.
 // TODO(reviewer:@alice type:security): Security audit needed
 ```
 
-### ⚡ Power User Combo
+### ⚡ Power User Combos
+
+**Live Templates**
+Just type `todo+` and hit `Tab` or `Space` to instantly generate an enriched comment template!
+
+**Quick Fixes (Intention Actions)**
+Have a codebase full of old, basic TODOs? Just type `// TODO: fix this`, click on it, press **`Alt + Enter`** (or Option+Enter) and choose **"Upgrade to TODO++ format"**!
+
+**Full Format Example**
 Combine everything into a comprehensive task definition:
 ```kotlin
 // TODO(@me priority:high due:today issue:PROJ-101): Fix critical crash
@@ -94,4 +102,4 @@ Define your own priority levels and colors!
     *   Type `risk:high` in the search bar to see only high-risk items.
     *   Type `@john` to see John's tasks.
 *   **Navigation**: Double-click any row to jump directly to that line of code.
-*   **Export**: Automatically export your customized and grouped list to HTML or Markdown.
+*   **Export**: Automatically export your customized and grouped list to CSV, Markdown, or a **Beautiful Interactive HTML Dashboard**.
