@@ -19,6 +19,7 @@ dependencies {
         create("IC", "2024.1")
         bundledPlugins("com.intellij.java")
         instrumentationTools()
+        pluginVerifier()
     }
     
     testImplementation(kotlin("test"))
@@ -48,5 +49,13 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+}
+
+intellijPlatform {
+    pluginVerification {
+        ides {
+            ide("IC-2024.1")
+        }
     }
 }
