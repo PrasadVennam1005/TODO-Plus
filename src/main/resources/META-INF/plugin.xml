@@ -8,17 +8,17 @@
     
     <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into a powerful task management system directly within IntelliJ IDEA. Organize, track, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v1.6.4 (Stable & Polished)</h3>
+    <h3>✨ Status: v1.7.0 (Stable & Polished)</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
-        <li><strong>Advanced Syntax</strong>: Support for <code>@assignee</code>, <code>priority:high</code>, <code>due:today</code>, and custom tags.</li>
-        <li><strong>Smart Scanning</strong>: Automatically finds TODOs in Java, Kotlin, Python, JavaScript, SQL, Shell, and 10+ other languages.</li>
-        <li><strong>Custom Priorities</strong>: Define your own priority levels (e.g., CRITICAL, OPTIONAL) with custom colors.</li>
-        <li><strong>Due Date Tracking</strong>: Highlights overdue tasks in RED and upcoming tasks in ORANGE.</li>
+        <li><strong>Premium Grouping UI</strong>: Organize TODOs in a sleek Tree view grouped by Priority, Assignee, File, or None.</li>
+        <li><strong>Git Blame Integration</strong>: Automatically maps TODOs to their Git Authors when assignees are missing.</li>
+        <li><strong>Live Templates & Quick Fixes</strong>: Type <code>todo+</code> to auto-generate enriched comments, or use <code>Alt+Enter</code> to instantly upgrade basic TODOs.</li>
+        <li><strong>Smart Scanning & Scope Exclusions</strong>: Automatically finds TODOs across 10+ languages. Easily ignore <code>node_modules</code> or <code>build</code> directories to boost performance!</li>
+        <li><strong>Export Dashboards</strong>: Export your filtered TODO lists into beautiful, standalone, offline HTML dashboards with priority charts.</li>
         <li><strong>Issue Tracker Integration</strong>: Click to open GitHub/Jira issues directly from the TODO list (matches <code>PROJ-123</code>).</li>
-        <li><strong>Robust Filtering</strong>: Filter by Assignee, Priority, Category, or arbitrary tags (e.g., <code>risk:high</code>).</li>
-        <li><strong>Seamless Navigation</strong>: Double-click to jump straight to the code line.</li>
+        <li><strong>Robust Filtering & Navigation</strong>: Filter by Assignee, Category, or dynamic Tags. Double-click any TODO to jump straight to the exact line of code.</li>
     </ul>
 
     <h3>📝 Usage Examples:</h3>
