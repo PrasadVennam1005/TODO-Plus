@@ -21,10 +21,19 @@ import javax.swing.*
 class TodoSettingsConfigurable : Configurable {
 
     private var settingsPanel: JPanel? = null
+    
+    // Priorities
     private val priorityListModel = DefaultListModel<TodoSettingsService.PriorityConfig>()
     private lateinit var priorityList: JBList<TodoSettingsService.PriorityConfig>
+    
+    // Ignored Dirs
+    private val ignoredListModel = DefaultListModel<String>()
+    private lateinit var ignoredList: JBList<String>
+
+    // Issue Tracker
     private val issueUrlField = JTextField()
     private val issuePatternField = JTextField()
+    
     private var isModified = false
 
     override fun getDisplayName(): String = "TODO++"
@@ -35,28 +44,46 @@ class TodoSettingsConfigurable : Configurable {
         val mainPanel = JPanel()
         mainPanel.layout = BoxLayout(mainPanel, BoxLayout.Y_AXIS)
         
-        // Priority Settings
-        val currentSettings = TodoSettingsService.getInstance().getPriorities()
+        // --- Priority Settings ---
+        val currentPriorities = TodoSettingsService.getInstance().getPriorities()
         priorityListModel.clear()
-        currentSettings.forEach { priorityListModel.addElement(it.copy()) } // Deep copy
+        currentPriorities.forEach { priorityListModel.addElement(it.copy()) }
         
         priorityList = JBList(priorityListModel).apply {
             cellRenderer = PriorityListRenderer()
             selectionMode = ListSelectionModel.SINGLE_SELECTION
         }
         
-        val decorator = ToolbarDecorator.createDecorator(priorityList)
+        val priorityDecorator = ToolbarDecorator.createDecorator(priorityList)
             .setAddAction { addPriority() }
             .setRemoveAction { removePriority() }
             .setMoveUpAction { movePriority(-1) }
             .setMoveDownAction { movePriority(1) }
             .setEditAction { editPriority() }
             
-        val listPanel = decorator.createPanel()
-        listPanel.border = BorderFactory.createTitledBorder("Priority Levels (Ordered High to Low)")
-        mainPanel.add(listPanel)
+        val priorityPanel = priorityDecorator.createPanel()
+        priorityPanel.border = BorderFactory.createTitledBorder("Priority Levels (Ordered High to Low)")
+        mainPanel.add(priorityPanel)
         
-        // Issue Tracker Settings
+        // --- Ignored Directories Settings ---
+        val currentIgnored = TodoSettingsService.getInstance().getIgnoredDirectories()
+        ignoredListModel.clear()
+        currentIgnored.forEach { ignoredListModel.addElement(it) }
+        
+        ignoredList = JBList(ignoredListModel).apply {
+            selectionMode = ListSelectionModel.SINGLE_SELECTION
+        }
+        
+        val ignoredDecorator = ToolbarDecorator.createDecorator(ignoredList)
+            .setAddAction { addIgnoredDirectory() }
+            .setRemoveAction { removeIgnoredDirectory() }
+            .disableUpDownActions()
+            
+        val ignoredPanel = ignoredDecorator.createPanel()
+        ignoredPanel.border = BorderFactory.createTitledBorder("Ignored Directories (e.g. build, node_modules)")
+        mainPanel.add(ignoredPanel)
+        
+        // --- Issue Tracker Settings ---
         val issuePanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createTitledBorder("Issue Tracker Integration")
             
@@ -74,7 +101,7 @@ class TodoSettingsConfigurable : Configurable {
         }
         mainPanel.add(issuePanel)
         
-        // Load Issue Settings
+        // --- Load Issue Settings ---
         val settings = TodoSettingsService.getInstance()
         issueUrlField.text = settings.getState().issueUrlTemplate
         issuePatternField.text = settings.getState().issuePattern
@@ -145,40 +172,92 @@ class TodoSettingsConfigurable : Configurable {
         }
     }
 
+    private fun addIgnoredDirectory() {
+        val panel = settingsPanel ?: return
+        val dir = Messages.showInputDialog(
+            panel,
+            "Enter directory name to ignore (e.g. node_modules):",
+            "Add Ignored Directory",
+            Messages.getQuestionIcon(),
+            "",
+            object : InputValidator {
+                override fun checkInput(inputString: String?): Boolean {
+                    return !inputString.isNullOrBlank() && 
+                           !ignoredListModel.elements().toList().contains(inputString.trim())
+                }
+                override fun canClose(inputString: String?): Boolean = checkInput(inputString)
+            }
+        )
+        
+        if (dir != null) {
+            ignoredListModel.addElement(dir.trim())
+            isModified = true
+        }
+    }
+    
+    private fun removeIgnoredDirectory() {
+        val index = ignoredList.selectedIndex
+        if (index != -1) {
+            ignoredListModel.remove(index)
+            isModified = true
+        }
+    }
+
     override fun isModified(): Boolean {
         if (isModified) return true
         
         val settings = TodoSettingsService.getInstance()
-        val stored = settings.getPriorities()
-        if (stored.size != priorityListModel.size()) return true
+        
+        // Check priorities
+        val storedPriorities = settings.getPriorities()
+        if (storedPriorities.size != priorityListModel.size()) return true
+        for (i in 0 until storedPriorities.size) {
+            if (storedPriorities[i] != priorityListModel.get(i)) return true
+        }
+        
+        // Check ignored dirs
+        val storedIgnored = settings.getIgnoredDirectories()
+        if (storedIgnored.size != ignoredListModel.size()) return true
+        for (i in 0 until storedIgnored.size) {
+            if (storedIgnored[i] != ignoredListModel.get(i)) return true
+        }
 
         // Check issue settings
         if (issueUrlField.text != settings.getState().issueUrlTemplate) return true
         if (issuePatternField.text != settings.getState().issuePattern) return true
         
-        for (i in 0 until stored.size) {
-            if (stored[i] != priorityListModel.get(i)) return true
-        }
-        
         return false
     }
 
     override fun apply() {
-        val newPriorities = priorityListModel.elements().toList()
         val settings = TodoSettingsService.getInstance()
+        
+        val newPriorities = priorityListModel.elements().toList()
         settings.setPriorities(newPriorities)
+        
+        val newIgnored = ignoredListModel.elements().toList()
+        settings.setIgnoredDirectories(newIgnored)
+        
         settings.getState().issueUrlTemplate = issueUrlField.text.trim()
         settings.getState().issuePattern = issuePatternField.text.trim()
+        
         isModified = false
     }
 
     override fun reset() {
         val settings = TodoSettingsService.getInstance()
-        val currentSettings = settings.getPriorities()
+        
+        val currentPriorities = settings.getPriorities()
         priorityListModel.clear()
-        currentSettings.forEach { priorityListModel.addElement(it.copy()) }
+        currentPriorities.forEach { priorityListModel.addElement(it.copy()) }
+        
+        val currentIgnored = settings.getIgnoredDirectories()
+        ignoredListModel.clear()
+        currentIgnored.forEach { ignoredListModel.addElement(it) }
+        
         issueUrlField.text = settings.getState().issueUrlTemplate
         issuePatternField.text = settings.getState().issuePattern
+        
         isModified = false
     }
     

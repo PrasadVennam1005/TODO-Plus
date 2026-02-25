@@ -15,7 +15,9 @@ data class TodoItem(
     val dueDate: java.time.LocalDate? = null,
     val filePath: String,
     val lineNumber: Int,
-    val fullText: String
+    val fullText: String,
+    var vcsAuthor: String? = null,
+    var vcsDate: java.util.Date? = null
 ) {
     fun getFileName(): String = filePath.substringAfterLast('/')
 

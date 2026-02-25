@@ -118,15 +118,11 @@ class TodoParser(private val issuePattern: String = "") {
 
         for (part in parts) {
             when {
-                // @assignee
-                part.startsWith("@") -> {
-                    assignee = part.substring(1)
-                }
-                // key:value
+                // key:value (even if it starts with @, e.g. @priority:HIGH)
                 part.contains(":") -> {
                     val keyVal = part.split(":", limit = 2)
                     if (keyVal.size == 2) {
-                        val key = keyVal[0].lowercase()
+                        val key = keyVal[0].lowercase().removePrefix("@")
                         var value = keyVal[1]
                         
                         // Strip quotes if present
@@ -137,12 +133,16 @@ class TodoParser(private val issuePattern: String = "") {
                         when (key) {
                             "priority" -> priority = Priority.parse(value)
                             "category" -> category = value
-                            "assignee", "assigned" -> assignee = value
+                            "assignee", "assigned" -> assignee = value.removePrefix("@")
                             "due" -> dueDate = parseDueDate(value)
                             "issue" -> issueId = value
                             else -> tags[key] = value
                         }
                     }
+                }
+                // @assignee (standalone word starting with @)
+                part.startsWith("@") -> {
+                    assignee = part.substring(1)
                 }
             }
         }

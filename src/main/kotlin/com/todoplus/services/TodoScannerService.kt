@@ -1,6 +1,7 @@
 package com.todoplus.services
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -59,7 +60,7 @@ class TodoScannerService(private val project: Project) {
         }
 
         return try {
-            runReadAction {
+            val parsedTodos = runReadAction {
                 // Try to get content from PSI (editor buffer) first
                 val psiFile = PsiManager.getInstance(project).findFile(file)
                 val content = if (psiFile != null) {
@@ -74,6 +75,14 @@ class TodoScannerService(private val project: Project) {
                 val parser = createParser()
                 parser.parseLines(lines, file.path)
             }
+                
+            // Fetch VCS data OUTSIDE of the ReadAction lock to prevent 'Synchronous execution under ReadAction' errors
+            val vcsService = project.service<com.todoplus.services.vcs.TodoVcsService>()
+            parsedTodos.forEach { todo ->
+                vcsService.getVcsDataForTodo(todo, file)
+            }
+            
+            parsedTodos
         } catch (e: Exception) {
             // Log warning instead of swallowing
             LOG.warn("Failed to scan file: ${file.path}", e)
@@ -90,12 +99,23 @@ class TodoScannerService(private val project: Project) {
             val files = mutableListOf<VirtualFile>()
             val scope = GlobalSearchScope.projectScope(project)
             
+            // Get ignored directories
+            val ignoredDirs = com.todoplus.settings.TodoSettingsService.getInstance().getIgnoredDirectories()
+            
             // Get common source file types
             val fileTypes = getSourceFileTypes()
             
             fileTypes.forEach { fileType ->
                 val virtualFiles = FileTypeIndex.getFiles(fileType, scope)
-                files.addAll(virtualFiles)
+                // Filter out files in ignored directories
+                val filteredFiles = virtualFiles.filter { file ->
+                    val path = file.path
+                    // Check if path contains /[ignoredDir]/
+                    !ignoredDirs.any { ignoredDir ->
+                        path.contains("/$ignoredDir/") || path.endsWith("/$ignoredDir")
+                    }
+                }
+                files.addAll(filteredFiles)
             }
             
             files
@@ -146,6 +166,7 @@ class TodoScannerService(private val project: Project) {
     fun getStatistics(todos: List<TodoItem>): TodoStatistics {
         return TodoStatistics(
             total = todos.size,
+            criticalPriority = todos.count { it.priority == com.todoplus.models.Priority.CRITICAL },
             highPriority = todos.count { it.priority == com.todoplus.models.Priority.HIGH },
             mediumPriority = todos.count { it.priority == com.todoplus.models.Priority.MEDIUM },
             lowPriority = todos.count { it.priority == com.todoplus.models.Priority.LOW },
@@ -160,6 +181,7 @@ class TodoScannerService(private val project: Project) {
  */
 data class TodoStatistics(
     val total: Int,
+    val criticalPriority: Int,
     val highPriority: Int,
     val mediumPriority: Int,
     val lowPriority: Int,

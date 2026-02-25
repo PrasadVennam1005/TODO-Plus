@@ -23,14 +23,14 @@ Assign TODOs to team members, set priorities, add due dates, and track issues:
 - **Visual Alerts**: Overdue items are highlighted in **RED**. Items due soon are **ORANGE**.
 - **Sorting**: Sort the TODO list by due date to see what's urgent.
 
-### 🔗 Issue Tracker Integration
+### 🔗 Issue Tracker & Git Integration
+- **Git Blame**: Automatically fetches the Author and Date Added for your TODOs from version control.
 - **Link Issues**: Add `issue:ID` (e.g., `issue:PROJ-123`) to your TODOs.
 - **Auto-Detection**: Configure regex patterns (e.g., `[A-Z]+-\d+`) to automatically detect issue IDs in descriptions.
-- **Python Support**: Now supports Python (`#`) and SQL (`--`) comment styles.
 - **Quick Access**: Right-click any TODO to "Open in Issue Tracker" (Jira, GitHub, GitLab, etc.).
 
 ### 🎨 Custom Priorities & Colors
-- **Default Priorities**: 🔴 High, 🟠 Medium, 🟢 Low.
+- **Default Priorities**: 🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low.
 - **Customizable**: Add your own priorities (e.g., "Critical", "Optional") in **Settings > Tools > TODO++**.
 - **Colors**: Assign custom colors to each priority level.
 
@@ -46,9 +46,9 @@ Assign TODOs to team members, set priorities, add due dates, and track issues:
 - Fast and efficient file indexing
 
 ### 🎨 Visual Organization
-- **Color-coded priorities**: 🔴 RED (High), 🟠 ORANGE (Medium), 🟢 GREEN (Low)
-- Clean table view with sortable columns
-- Professional UI integrated into IntelliJ's tool window system
+- **Color-coded priorities**: 🟣 PURPLE (Critical), 🔴 RED (High), 🟠 ORANGE (Medium), 🟢 GREEN (Low)
+- **Hierarchical Tree View**: Organize and Group your TODOs dynamically by File, Assignee, Priority, or Category.
+- **Premium UI**: Native IDE `ActionToolbar` integration, `SearchTextFields`, and sleek `SimpleToolWindowPanel` designs that map perfectly to Dark/Light themes.
 
 ### 🔎 Powerful Filtering
 - **Priority**: Filter by specific priority levels.
@@ -169,5 +169,5 @@ Built with the IntelliJ Platform SDK
 
 **Made with ❤️ for developers who love organized code**
 
-**Copyright © 2026 Vennam Prasad**
+**Copyright © 2026 Prasad Vennam**
 

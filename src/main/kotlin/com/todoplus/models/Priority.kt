@@ -6,6 +6,7 @@ package com.todoplus.models
 data class Priority(val name: String) : Comparable<Priority> {
     
     companion object {
+        val CRITICAL = Priority("CRITICAL")
         val HIGH = Priority("HIGH")
         val MEDIUM = Priority("MEDIUM")
         val LOW = Priority("LOW")

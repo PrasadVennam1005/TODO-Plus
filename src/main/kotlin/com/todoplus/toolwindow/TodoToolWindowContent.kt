@@ -1,5 +1,6 @@
 package com.todoplus.toolwindow
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -22,28 +23,35 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.table.JBTable
+import com.intellij.ui.dualView.TreeTableView
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.openapi.actionSystem.*
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBUI
-import com.intellij.ide.BrowserUtil
 import com.todoplus.exporter.TodoExporter
 import com.todoplus.models.TodoItem
 import com.todoplus.services.TodoScannerService
+import com.todoplus.ui.tree.TodoGroupBy
+import com.todoplus.ui.tree.TodoTreeModelBuilder
+import com.todoplus.ui.tree.TodoTreeTableColumns
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
-import javax.swing.table.DefaultTableCellRenderer
-import javax.swing.table.DefaultTableModel
+
+import javax.swing.tree.DefaultMutableTreeNode
 
 /**
  * Content panel for the TODO++ tool window
  */
 class TodoToolWindowContent(private val project: Project) {
 
-    private val tableModel = DefaultTableModel()
-    private val table: JBTable
-    private val mainPanel: JBPanel<JBPanel<*>>
+        private val treeTable: TreeTableView
+    private val groupByDropdown = JComboBox(TodoGroupBy.entries.toTypedArray())
+    private val mainPanel: SimpleToolWindowPanel
     private val statusLabel: JBLabel
     private val allTodos = mutableListOf<TodoItem>()
     private val filteredTodos = mutableListOf<TodoItem>()
@@ -52,40 +60,17 @@ class TodoToolWindowContent(private val project: Project) {
     private val priorityFilter = JComboBox<String>()
     private val assigneeFilter = JBTextField()
     private val categoryFilter = JBTextField()
-    private val searchField = JBTextField()
+    private val searchField = SearchTextField()
+    
+    // Scope control
+    private val scopeDropdown = JComboBox(arrayOf("Project", "Current File"))
 
-    init {
-        // Initialize table with columns
-        tableModel.addColumn("Priority")
-        tableModel.addColumn("Assignee")
-        tableModel.addColumn("Category")
-        tableModel.addColumn("Due Date")
-        tableModel.addColumn("Description")
-        tableModel.addColumn("Tags")
-        tableModel.addColumn("File")
-        tableModel.addColumn("Line")
-
-        table = JBTable(tableModel).apply {
-            // Make table read-only
+        init {
+        treeTable = TreeTableView(TodoTreeModelBuilder.buildModel(emptyList(), TodoGroupBy.NONE, TodoTreeTableColumns.createColumns())).apply {
             setDefaultEditor(Any::class.java, null)
-            // Enable row selection
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
             
-            // Enable column sorting
-            autoCreateRowSorter = true
-            
-            // Color-code priorities
-            setDefaultRenderer(Any::class.java, PriorityColorRenderer())
-            
-            // Specific column widths
-            columnModel.getColumn(0).preferredWidth = 80  // Priority
-            columnModel.getColumn(1).preferredWidth = 100 // Assignee
-            columnModel.getColumn(2).preferredWidth = 100 // Category
-            columnModel.getColumn(3).preferredWidth = 100 // Due Date
-            columnModel.getColumn(4).preferredWidth = 400 // Description
-            columnModel.getColumn(5).preferredWidth = 150 // Tags
-            columnModel.getColumn(6).preferredWidth = 150 // File
-            columnModel.getColumn(7).preferredWidth = 50  // Line
+            // Custom renderers are now handled by TodoColumnInfo descriptors
             
             // Add click listener for navigation and context menu
             addMouseListener(object : MouseAdapter() {
@@ -93,76 +78,80 @@ class TodoToolWindowContent(private val project: Project) {
                     if (e.clickCount == 2) {
                         navigateToSelectedTodo()
                     }
-                    
-                    // Right-click context menu
                     if (SwingUtilities.isRightMouseButton(e)) {
                         val row = rowAtPoint(e.point)
                         if (row >= 0 && row < rowCount) {
                             setRowSelectionInterval(row, row)
-                            showContextMenu(e, filteredTodos[convertRowIndexToModel(row)])
+                            val node = tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode
+                            val todo = node?.userObject as? TodoItem
+                            if (todo != null) showContextMenu(e, todo)
                         }
                     }
                 }
             })
+            
+            // Premium Tree Settings
+            tree.isRootVisible = false
+            tree.showsRootHandles = true
         }
-        
-        // Configure custom sorting for priority column
-        configureSorting()
 
+        // Configure empty text
+        treeTable.emptyText.text = "No TODOs found. Click 'Scan Project' to begin."
+        
         // Create filter panel
         val filterPanel = createFilterPanel()
 
-        // Create toolbar with buttons
-        val toolbar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            val refreshButton = JButton("🔄 Refresh").apply {
-                toolTipText = "Refresh TODO list"
-                addActionListener { refreshTodos() }
-            }
-            add(refreshButton)
-            
-            val scanButton = JButton("🔍 Scan Project").apply {
-                toolTipText = "Scan entire project for TODOs"
-                addActionListener { scanProject() }
-            }
-            add(scanButton)
-            
-            val exportCsvButton = JButton("📄 Export CSV").apply {
-                toolTipText = "Export TODOs to CSV file"
-                addActionListener { exportTodos("csv") }
-            }
-            add(exportCsvButton)
-            
-            val exportMdButton = JButton("📋 Export Markdown").apply {
-                toolTipText = "Export TODOs to Markdown file"
-                addActionListener { exportTodos("md") }
-            }
-            add(exportMdButton)
-            
-            val clearFiltersButton = JButton("✖ Clear Filters").apply {
-                toolTipText = "Clear all filters"
-                addActionListener { clearFilters() }
-            }
-            add(clearFiltersButton)
+        // Create Action Toolbar (Premium UI)
+        val actionGroup = DefaultActionGroup().apply {
+            add(object : AnAction("Refresh", "Refresh TODO list from existing scan", AllIcons.Actions.Refresh) {
+                override fun actionPerformed(e: AnActionEvent) { performScan() }
+            })
+            add(object : AnAction("Scan", "Scan selected scope for TODOs", AllIcons.Actions.Find) {
+                override fun actionPerformed(e: AnActionEvent) { performScan() }
+            })
+            addSeparator()
+            add(object : AnAction("Export CSV", "Export TODOs to CSV file", AllIcons.ToolbarDecorator.Export) {
+                override fun actionPerformed(e: AnActionEvent) { exportTodos("csv") }
+            })
+            add(object : AnAction("Export Markdown", "Export TODOs to Markdown file", AllIcons.FileTypes.Text) {
+                override fun actionPerformed(e: AnActionEvent) { exportTodos("md") }
+            })
+            addSeparator()
+            add(object : AnAction("Clear Filters", "Clear all search filters", AllIcons.Actions.GC) {
+                override fun actionPerformed(e: AnActionEvent) { clearFilters() }
+            })
+            addSeparator()
+            add(object : AnAction("Expand All", "Expand all groups", AllIcons.Actions.Expandall) {
+                override fun actionPerformed(e: AnActionEvent) { TreeUtil.expandAll(treeTable.tree) }
+            })
+            add(object : AnAction("Collapse All", "Collapse all groups", AllIcons.Actions.Collapseall) {
+                override fun actionPerformed(e: AnActionEvent) { TreeUtil.collapseAll(treeTable.tree, 0) }
+            })
         }
+        
+        val actionToolbar = ActionManager.getInstance().createActionToolbar("TodoPlusToolbar", actionGroup, true)
+        actionToolbar.targetComponent = treeTable
 
-        statusLabel = JBLabel("Ready. Click 'Scan Project' to find TODOs.")
-        statusLabel.border = BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        statusLabel = JBLabel(" Ready. ")
+        statusLabel.border = JBUI.Borders.empty(2, 5)
+        statusLabel.foreground = Gray._120
 
-        // Create main panel
-        mainPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
-            val header = JBLabel("TODO++ - Enhanced TODO Management")
-            header.border = BorderFactory.createEmptyBorder(10, 10, 5, 10)
-            header.font = header.font.deriveFont(Font.BOLD, 14f)
-            
-            val topPanel = JPanel(BorderLayout()).apply {
-                add(header, BorderLayout.WEST)
-                add(toolbar, BorderLayout.EAST)
+        // Create main panel using SimpleToolWindowPanel
+        mainPanel = SimpleToolWindowPanel(true, true).apply {
+            val topPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+                border = JBUI.Borders.customLineBottom(Gray._200)
+                add(actionToolbar.component, BorderLayout.WEST)
+                add(filterPanel, BorderLayout.CENTER)
             }
             
-            add(topPanel, BorderLayout.NORTH)
-            add(filterPanel, BorderLayout.AFTER_LINE_ENDS)
-            add(JBScrollPane(table), BorderLayout.CENTER)
-            add(statusLabel, BorderLayout.SOUTH)
+            toolbar = topPanel
+            setContent(JBScrollPane(treeTable as Component))
+            
+            val bottomPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+                border = JBUI.Borders.customLineTop(Gray._200)
+                add(statusLabel, BorderLayout.WEST)
+            }
+            add(bottomPanel, BorderLayout.SOUTH)
         }
         
         // Auto-refresh on file save
@@ -203,58 +192,102 @@ class TodoToolWindowContent(private val project: Project) {
     }
 
     private fun createFilterPanel(): JPanel {
-        val panel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = BorderFactory.createTitledBorder("Filters")
+        val panel = JPanel(FlowLayout(FlowLayout.RIGHT, 10, 2)).apply {
+            border = JBUI.Borders.empty(2, 5)
         }
 
+        // Group By dropdown
+        panel.add(JLabel("Group By:"))
+        groupByDropdown.addActionListener { applyFilters() }
+        panel.add(groupByDropdown)
+
+        // Scope dropdown
+        panel.add(JLabel("Scope:"))
+        scopeDropdown.addActionListener { performScan() }
+        panel.add(scopeDropdown)
+
         // Priority filter
-        panel.add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Priority:"))
-            priorityFilter.addActionListener { applyFilters() }
-            add(priorityFilter)
-        })
+        panel.add(JLabel("Priority:"))
+        priorityFilter.addActionListener { applyFilters() }
+        panel.add(priorityFilter)
 
         // Assignee filter
-        panel.add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Assignee:"))
-            assigneeFilter.columns = 10
-            assigneeFilter.toolTipText = "Filter by assignee (e.g., @john)"
-            val filterButton = JButton("Apply").apply {
-                addActionListener { applyFilters() }
-            }
-            add(assigneeFilter)
-            add(filterButton)
-        })
+        panel.add(JLabel("Person:"))
+        assigneeFilter.columns = 8
+        assigneeFilter.toolTipText = "Author/Assignee..."
+        panel.add(assigneeFilter)
 
         // Category filter
-        panel.add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Category:"))
-            categoryFilter.columns = 10
-            categoryFilter.toolTipText = "Filter by category (e.g., bug, feature)"
-            val filterButton = JButton("Apply").apply {
-                addActionListener { applyFilters() }
-            }
-            add(categoryFilter)
-            add(filterButton)
-        })
+        panel.add(JLabel("Category:"))
+        categoryFilter.columns = 8
+        categoryFilter.toolTipText = "Bug/Feature..."
+        panel.add(categoryFilter)
+        
+        // Search text field (Premium UI)
+        searchField.toolTipText = "Search description..."
+        panel.add(searchField)
+        
+        // Apply filter on enter key
+        val applyAction = java.awt.event.ActionListener { applyFilters() }
+        assigneeFilter.addActionListener(applyAction)
+        categoryFilter.addActionListener(applyAction)
+        
+        // Add listener to search field's text editor
+        searchField.textEditor.addActionListener(applyAction)
 
-        // Search field
-        panel.add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Search:"))
-            searchField.columns = 10
-            searchField.toolTipText = "Search in description"
-            val searchButton = JButton("Search").apply {
-                addActionListener { applyFilters() }
-            }
-            add(searchField)
-            add(searchButton)
-        })
+        val filterButton = JButton("Apply").apply {
+            addActionListener(applyAction)
+            isOpaque = false
+        }
+        panel.add(filterButton)
 
         return panel
     }
 
     fun getContent(): JComponent = mainPanel
+
+    private fun performScan() {
+        if (scopeDropdown.selectedItem == "Current File") {
+            scanCurrentFile()
+        } else {
+            scanProject()
+        }
+    }
+
+    private fun scanCurrentFile() {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
+        val document = editor?.document
+        val file = document?.let { com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getFile(it) }
+        
+        if (file == null) {
+            statusLabel.text = "No active file selected."
+            return
+        }
+        
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Scanning Current File", true) {
+            override fun run(indicator: ProgressIndicator) {
+                indicator.text = "Scanning ${file.name}..."
+                indicator.isIndeterminate = true
+                
+                try {
+                    val scanner = project.service<TodoScannerService>()
+                    val foundTodos = scanner.scanFile(file)
+                    
+                    ApplicationManager.getApplication().invokeLater {
+                        allTodos.clear()
+                        allTodos.addAll(foundTodos)
+                        
+                        applyFilters()
+                        updateStatistics()
+                    }
+                } catch (e: Exception) {
+                    ApplicationManager.getApplication().invokeLater {
+                        statusLabel.text = "Error scanning file: ${e.message}"
+                    }
+                }
+            }
+        })
+    }
 
     private fun scanProject() {
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Scanning for TODOs", true) {
@@ -287,8 +320,6 @@ class TodoToolWindowContent(private val project: Project) {
 
     private fun applyFilters() {
         filteredTodos.clear()
-        tableModel.rowCount = 0
-        
         val priorityFilterValue = priorityFilter.selectedItem as String
         val assigneeText = assigneeFilter.text.trim().removePrefix("@").lowercase()
         val categoryText = categoryFilter.text.trim().lowercase()
@@ -307,7 +338,9 @@ class TodoToolWindowContent(private val project: Project) {
             
             // Assignee filter
             if (matches && assigneeText.isNotEmpty()) {
-                matches = todo.assignee?.lowercase()?.contains(assigneeText) == true
+                val hasAssigneeMatch = todo.assignee?.lowercase()?.contains(assigneeText) == true
+                val hasAuthorMatch = todo.vcsAuthor?.lowercase()?.contains(assigneeText) == true
+                matches = hasAssigneeMatch || hasAuthorMatch
             }
             
             // Category filter
@@ -326,7 +359,11 @@ class TodoToolWindowContent(private val project: Project) {
                        
                         matches = when(key) {
                             "priority" -> todo.priority?.name?.lowercase() == value
-                            "assignee", "assigned" -> todo.assignee?.lowercase()?.contains(value) == true
+                            "assignee", "assigned", "author" -> {
+                                val hasAssignee = todo.assignee?.lowercase()?.contains(value) == true
+                                val hasAuthor = todo.vcsAuthor?.lowercase()?.contains(value) == true
+                                hasAssignee || hasAuthor
+                            }
                             "category" -> todo.category?.lowercase()?.contains(value) == true
                             else -> todo.tags[key]?.lowercase()?.contains(value) == true
                         }
@@ -338,17 +375,28 @@ class TodoToolWindowContent(private val project: Project) {
             
             if (matches) {
                 filteredTodos.add(todo)
-                tableModel.addRow(arrayOf(
-                    todo.priority?.name ?: "-",
-                    if (todo.assignee != null) "@${todo.assignee}" else "-",
-                    todo.category ?: "-",
-                    todo.dueDate ?: "-",  // Store LocalDate object or "-" string
-                    todo.description,
-                    todo.tags.entries.filter { it.key != "due" }.joinToString(", ") { "${it.key}:${it.value}" }.ifEmpty { "-" },
-                    todo.getFileName(),
-                    todo.lineNumber
-                ))
             }
+        }
+        
+                
+        val newModel = TodoTreeModelBuilder.buildModel(filteredTodos, groupByDropdown.selectedItem as TodoGroupBy, TodoTreeTableColumns.createColumns())
+        treeTable.setModel(newModel)
+        TreeUtil.expandAll(treeTable.tree)
+        
+        // Adjust widths after setting model
+        val cols = treeTable.columnModel
+        if (cols.columnCount >= 11) {
+            cols.getColumn(0).preferredWidth = 350 // Item/Group
+            cols.getColumn(1).preferredWidth = 80  // Priority
+            cols.getColumn(2).preferredWidth = 100 // Author
+            cols.getColumn(3).preferredWidth = 100 // Assignee
+            cols.getColumn(4).preferredWidth = 100 // Category
+            cols.getColumn(5).preferredWidth = 100 // Issue
+            cols.getColumn(6).preferredWidth = 100 // Date
+            cols.getColumn(7).preferredWidth = 100 // Due Date
+            cols.getColumn(8).preferredWidth = 150 // Tags
+            cols.getColumn(9).preferredWidth = 200 // File
+            cols.getColumn(10).preferredWidth = 50  // Line
         }
         
         updateStatistics()
@@ -390,6 +438,7 @@ class TodoToolWindowContent(private val project: Project) {
     }
     
     private fun clearFilters() {
+        groupByDropdown.selectedIndex = 0
         priorityFilter.selectedIndex = 0
         assigneeFilter.text = ""
         categoryFilter.text = ""
@@ -398,7 +447,7 @@ class TodoToolWindowContent(private val project: Project) {
     }
     
     private fun refreshTodos() {
-        scanProject()
+        performScan()
     }
     
     private fun showContextMenu(e: java.awt.event.MouseEvent, todo: TodoItem) {
@@ -443,160 +492,16 @@ class TodoToolWindowContent(private val project: Project) {
     }
     
     private fun navigateToSelectedTodo() {
-        val selectedRow = table.selectedRow
+        val selectedRow = treeTable.selectedRow
         if (selectedRow != -1) {
-            // Convert view row index to model row index in case of sorting
-            val modelRow = table.convertRowIndexToModel(selectedRow)
-            val todo = filteredTodos[modelRow]
-            navigateTo(todo)
+            val node = treeTable.tree.getPathForRow(selectedRow)?.lastPathComponent as? DefaultMutableTreeNode
+            val todo = node?.userObject as? TodoItem
+            if (todo != null) navigateTo(todo)
         }
     }
     
-    /**
-     * Custom cell renderer for priority column
-     */
-    private class PriorityColorRenderer : DefaultTableCellRenderer() {
-        
-        private val settingsService get() = com.todoplus.settings.TodoSettingsService.getInstance()
-        
-        override fun getTableCellRendererComponent(
-            table: JTable,
-            value: Any?,
-            isSelected: Boolean,
-            hasFocus: Boolean,
-            row: Int,
-            column: Int
-        ): Component {
-            val component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
-            
-            if (!isSelected) {
-                when (column) {
-                    0 -> {
-                        // Priority column - color-coded
-                        val priorityName = value?.toString()
-                        if (priorityName != null && priorityName != "-") {
-                            val color = settingsService.getPriorityColor(priorityName)
-                            
-                            if (color != null) {
-                                component.foreground = color
-                            } else {
-                                // Fallback for unknown priorities
-                                component.foreground = Gray._100
-                            }
-                        } else {
-                            // No priority - use italic gray
-                            component.font = component.font.deriveFont(Font.ITALIC)
-                            component.foreground = Gray._150
-                        }
-                        if (value?.toString() != "-") {
-                            component.font = component.font.deriveFont(Font.BOLD)
-                        }
-                    }
-                    1, 2 -> {
-                        // Assignee and Category columns - gray out if empty
-                        if (value?.toString() == "-") {
-                            component.foreground = Gray._150
-                            component.font = component.font.deriveFont(Font.ITALIC)
-                        } else {
-                            component.foreground = table.foreground
-                        }
-                    }
-                    3 -> {
-                         // Due Date column
-                        if (value == null || value.toString() == "-") {
-                            component.foreground = Gray._150
-                            component.font = component.font.deriveFont(Font.ITALIC)
-                        } else {
-                             try {
-                                 // Check if value is LocalDate (optimization) or String
-                                 val date = if (value is java.time.LocalDate) value else java.time.LocalDate.parse(value.toString())
-                                 val today = java.time.LocalDate.now()
-                                 
-                                 if (date.isBefore(today)) {
-                                     // Overdue - Red
-                                     component.foreground = Color(220, 50, 50)
-                                     component.font = component.font.deriveFont(Font.BOLD)
-                                 } else if (date.isBefore(today.plusDays(7))) {
-                                     // Due soon (within 7 days) - Orange
-                                     component.foreground = Color(220, 160, 30)
-                                 } else {
-                                     component.foreground = table.foreground
-                                 }
-                             } catch (e: Exception) {
-                                 component.foreground = table.foreground
-                             }
-                        }
-                    }
-                    4 -> { 
-                        // Description column
-                        component.foreground = table.foreground
-                    }
-                    5 -> {
-                        // Tags column
-                         if (value?.toString() == "-") {
-                            component.foreground = Gray._150
-                            component.font = component.font.deriveFont(Font.ITALIC)
-                        } else {
-                            component.foreground = Color(100, 100, 150) // Bluish for tags
-                        }
-                    }
-                    else -> {
-                        component.foreground = table.foreground
-                    }
-                }
-            }
-            
-            return component
-        }
-    }
-    
-    /**
-     * Configure custom sorting for table columns
-     */
-    private fun configureSorting() {
-        val sorter = table.rowSorter as? javax.swing.table.TableRowSorter<*> ?: return
-        
-        // Column 0: Priority - Custom comparator based on settings order
-        sorter.setComparator(0) { o1, o2 ->
-            val p1Name = o1?.toString()
-            val p2Name = o2?.toString()
-            
-            val settings = com.todoplus.settings.TodoSettingsService.getInstance()
-            val priorities = settings.getPriorities()
-            
-            // Find index in settings list
-            // -1 if not found
-            val idx1 = if (p1Name == null || p1Name == "-") Int.MAX_VALUE else priorities.indexOfFirst { it.name == p1Name }
-            val idx2 = if (p2Name == null || p2Name == "-") Int.MAX_VALUE else priorities.indexOfFirst { it.name == p2Name }
-            
-            val effectiveIdx1 = if (idx1 == -1) Int.MAX_VALUE - 1 else idx1 // Unknown priorities go to bottom but above null
-            val effectiveIdx2 = if (idx2 == -1) Int.MAX_VALUE - 1 else idx2
-            
-            effectiveIdx1.compareTo(effectiveIdx2)
-        }
-        
-        // Column 7: Line - Numeric sorting
-        sorter.setComparator(7) { o1, o2 ->
-            val n1 = o1?.toString()?.toIntOrNull() ?: Int.MAX_VALUE
-            val n2 = o2?.toString()?.toIntOrNull() ?: Int.MAX_VALUE
-            n1.compareTo(n2)
-        }
-        
-        // Columns 1, 2 (Assignee, Category), 3 (Due Date): String/Date sorting with nulls last
-        for (col in listOf(1, 2, 3)) {
-            sorter.setComparator(col) { o1, o2 ->
-                val s1 = o1?.toString() ?: ""
-                val s2 = o2?.toString() ?: ""
-                when {
-                    s1 == "-" && s2 == "-" -> 0
-                    s1 == "-" -> 1  // Nulls last
-                    s2 == "-" -> -1
-                    else -> s1.compareTo(s2, ignoreCase = true)
-                }
-            }
-        }
-    }
 
+    
     /**
      * Export TODOs to file
      */
@@ -654,7 +559,7 @@ class TodoToolWindowContent(private val project: Project) {
         // Debounce timer to prevent rapid refreshes
         val refreshTimer = Timer(500) {
             ApplicationManager.getApplication().invokeLater {
-                scanProject()
+                performScan()
             }
         }
         refreshTimer.isRepeats = false

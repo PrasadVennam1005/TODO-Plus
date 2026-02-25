@@ -234,5 +234,18 @@ class TodoParserTest {
         assertEquals(Priority.HIGH, result.priority)
         assertEquals("Keep it simple", result.tags["note"])
     }
+
+    @Test
+    fun `test parse key-value pairs that maliciously start with @`() {
+        val line = "// TODO(@priority:high @category:bug @due:tomorrow): Edge case test"
+        val result = parser.parseLine(line, "test.kt", 1)
+        
+        assertNotNull(result)
+        assertEquals("Edge case test", result.description)
+        assertNull(result.assignee) // Should NOT be 'priority' or 'category'
+        assertEquals(Priority.HIGH, result.priority)
+        assertEquals("bug", result.category)
+        assertNotNull(result.dueDate)
+    }
 }
 

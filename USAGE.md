@@ -24,7 +24,7 @@ Use these standard keys to organize your tasks:
 // TODO(@john): Assigned to John
 // TODO(category:refactor): Code cleanup
 ```
-*   **Priorities**: `HIGH`, `MEDIUM`, `LOW` (or custom defined).
+*   **Priorities**: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` (or custom defined).
 *   **Assignee**: Starts with `@`.
 *   **Category**: Any text.
 
@@ -88,9 +88,10 @@ Define your own priority levels and colors!
 
 ## 🔎 Tool Window Features
 
-*   **Sorting**: Click any column header (Priority, Due Date, etc.) to sort.
+*   **Grouping**: Use the **Group By** dropdown to organize your TODOs hierarchically by File, Assignee, Priority, or Category.
+*   **Sorting**: Click any column header (Priority, Due Date, etc.) to sort within groups.
 *   **Filtering**:
     *   Type `risk:high` in the search bar to see only high-risk items.
     *   Type `@john` to see John's tasks.
-*   **Navigation**: Double-click any row to jump to the code.
-*   **Export**: Click the Export button to save your list as CSV or Markdown.
+*   **Navigation**: Double-click any row to jump directly to that line of code.
+*   **Export**: Automatically export your customized and grouped list to HTML or Markdown.

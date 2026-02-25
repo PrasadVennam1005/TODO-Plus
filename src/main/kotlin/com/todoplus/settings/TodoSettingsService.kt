@@ -27,6 +27,7 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
 
     class State {
         var priorities: MutableList<PriorityConfig> = mutableListOf(
+            PriorityConfig("CRITICAL", Color(180, 40, 180).rgb), // Purple
             PriorityConfig("HIGH", Color(220, 50, 50).rgb),    // Red
             PriorityConfig("MEDIUM", Color(220, 160, 30).rgb),  // Orange
             PriorityConfig("LOW", Color(80, 160, 80).rgb)       // Green
@@ -34,6 +35,7 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         
         var issueUrlTemplate: String = "" // e.g., https://github.com/user/repo/issues/{id}
         var issuePattern: String = "[A-Z]+-\\d+" // Default: Jira-style (PROJ-123)
+        var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist")
     }
 
     private var myState = State()
@@ -42,6 +44,11 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
 
     override fun loadState(state: State) {
         XmlSerializerUtil.copyBean(state, myState)
+        
+        // Auto-migrate: Ensure CRITICAL exists for users loading an older settings XML file
+        if (myState.priorities.none { it.name.equals("CRITICAL", ignoreCase = true) }) {
+            myState.priorities.add(0, PriorityConfig("CRITICAL", Color(180, 40, 180).rgb))
+        }
     }
 
     fun getPriorities(): List<PriorityConfig> = myState.priorities
@@ -52,6 +59,12 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
     
     fun setPriorities(newPriorities: List<PriorityConfig>) {
         myState.priorities = newPriorities.toMutableList()
+    }
+    
+    fun getIgnoredDirectories(): List<String> = myState.ignoredDirectories
+    
+    fun setIgnoredDirectories(dirs: List<String>) {
+        myState.ignoredDirectories = dirs.toMutableList()
     }
 
     companion object {
