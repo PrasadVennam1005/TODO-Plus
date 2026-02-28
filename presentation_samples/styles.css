@@ -1,0 +1,21 @@
+/* 
+ * TODO(@frontend priority:HIGH category:design issue:CSS-42): Update the primary brand color to match the new Figma files 
+ */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+}
+
+.button-premium {
+  background-color: var(--primary-color);
+  border-radius: 8px;
+  padding: 10px 20px;
+
+  /* TODO(priority:LOW due:2025-05-01 transition:smooth): Add a hover animation here */
+  color: white;
+}
+
+/* FIXME(@intern priority:CRITICAL): This z-index is breaking the navigation dropdown */
+.modal-overlay {
+  z-index: 999999;
+}

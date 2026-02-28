@@ -8,10 +8,11 @@
     
     <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into a powerful task management system directly within IntelliJ IDEA. Organize, track, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v1.7.0 (Stable & Polished)</h3>
+    <h3>✨ Status: v1.8.0 (Stable & Polished)</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
+        <li><strong>Smart Due Date Notifications</strong>: Automatically reminds you via native IDE balloon popups about any TODOs that are overdue or due today!</li>
         <li><strong>Premium Grouping UI</strong>: Organize TODOs in a sleek Tree view grouped by Priority, Assignee, File, or None.</li>
         <li><strong>Git Blame Integration</strong>: Automatically maps TODOs to their Git Authors when assignees are missing.</li>
         <li><strong>Live Templates & Quick Fixes</strong>: Type <code>todo+</code> to auto-generate enriched comments, or use <code>Alt+Enter</code> to instantly upgrade basic TODOs.</li>
@@ -67,6 +68,9 @@
             <category>TODO++</category>
             <descriptionDirectoryName>UpgradeTodoIntention</descriptionDirectoryName>
         </intentionAction>
+        
+        <!-- Startup Activity -->
+        <postStartupActivity implementation="com.todoplus.services.TodoNotificationActivity"/>
     </extensions>
 
     

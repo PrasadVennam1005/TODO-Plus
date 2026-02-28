@@ -11,7 +11,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.todoplus.models.TodoItem
 import com.todoplus.parser.TodoParser
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Computable
 
 /**
  * Service for scanning project files and extracting TODO items
@@ -60,7 +61,7 @@ class TodoScannerService(private val project: Project) {
         }
 
         return try {
-            val parsedTodos = runReadAction {
+            val parsedTodos = ApplicationManager.getApplication().runReadAction(Computable {
                 // Try to get content from PSI (editor buffer) first
                 val psiFile = PsiManager.getInstance(project).findFile(file)
                 val content = if (psiFile != null) {
@@ -74,7 +75,7 @@ class TodoScannerService(private val project: Project) {
                 val lines = content.lines()
                 val parser = createParser()
                 parser.parseLines(lines, file.path)
-            }
+            })
                 
             // Fetch VCS data OUTSIDE of the ReadAction lock to prevent 'Synchronous execution under ReadAction' errors
             val vcsService = project.service<com.todoplus.services.vcs.TodoVcsService>()
@@ -95,7 +96,7 @@ class TodoScannerService(private val project: Project) {
      * Filters to only include source code files
      */
     private fun findAllFiles(): List<VirtualFile> {
-        return runReadAction {
+        return ApplicationManager.getApplication().runReadAction(Computable {
             val files = mutableListOf<VirtualFile>()
             val scope = GlobalSearchScope.projectScope(project)
             
@@ -119,7 +120,7 @@ class TodoScannerService(private val project: Project) {
             }
             
             files
-        }
+        })
     }
 
     /**

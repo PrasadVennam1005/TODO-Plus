@@ -523,7 +523,8 @@ class TodoToolWindowContent(private val project: Project) {
         // Create file descriptor
         val descriptor = FileSaverDescriptor(
             "Export TODOs",
-            "Save TODO list as ${format.uppercase()}"
+            "Save TODO list as ${format.uppercase()}",
+            format
         )
         
         // Show file chooser
