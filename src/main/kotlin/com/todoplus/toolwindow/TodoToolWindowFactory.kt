@@ -14,6 +14,7 @@ class TodoToolWindowFactory : ToolWindowFactory {
         val todoToolWindow = TodoToolWindowContent(project)
         val contentFactory = ContentFactory.getInstance()
         val content = contentFactory.createContent(todoToolWindow.getContent(), "", false)
+        content.setDisposer(todoToolWindow)
         toolWindow.contentManager.addContent(content)
     }
 

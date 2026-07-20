@@ -25,13 +25,18 @@ class TodoSettingsTest {
         assertTrue(state.priorities.any { it.name == "LOW" })
         
         // Verify default ignored directories
-        assertEquals(6, state.ignoredDirectories.size)
+        assertEquals(11, state.ignoredDirectories.size)
         assertTrue(state.ignoredDirectories.contains("node_modules"))
         assertTrue(state.ignoredDirectories.contains("build"))
         assertTrue(state.ignoredDirectories.contains(".idea"))
         assertTrue(state.ignoredDirectories.contains(".git"))
         assertTrue(state.ignoredDirectories.contains("out"))
         assertTrue(state.ignoredDirectories.contains("dist"))
+        assertTrue(state.ignoredDirectories.contains("bin"))
+        assertTrue(state.ignoredDirectories.contains("obj"))
+        assertTrue(state.ignoredDirectories.contains("target"))
+        assertTrue(state.ignoredDirectories.contains(".gradle"))
+        assertTrue(state.ignoredDirectories.contains("vendor"))
     }
 
     @Test

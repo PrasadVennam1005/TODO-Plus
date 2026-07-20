@@ -132,19 +132,11 @@ class TodoScannerService(private val project: Project) {
         
         // Add common source file extensions
         val extensions = listOf(
-            "java", "kt", "kts",  // Java, Kotlin
-            "js", "ts", "jsx", "tsx",  // JavaScript, TypeScript
-            "py",  // Python
-            "go",  // Go
-            "rs",  // Rust
-            "cpp", "c", "h", "hpp",  // C/C++
-            "cs",  // C#
-            "swift",  // Swift
-            "rb",  // Ruby
-            "php",  // PHP
-            "scala",  // Scala
-            "groovy",  // Groovy
-            "xml", "html", "sql", "lua", "sh"  // Markup & Scripts
+            "java", "kt", "kts", "cs", "cshtml", "razor", "fs", "fsx", "scala", "groovy", "gradle",  // JVM & .NET
+            "js", "ts", "jsx", "tsx", "vue", "svelte", "astro", "html", "htm", "css", "scss", "less", "sass",  // Web & Frontend
+            "cpp", "c", "h", "hpp", "cc", "cxx", "rs", "go", "swift", "m", "mm",  // Systems & Native
+            "py", "rb", "php", "blade.php", "erb", "sh", "bash", "zsh", "ps1", "lua", "dart", "ex", "exs", "clj",  // Scripting & Mobile
+            "xml", "sql", "yaml", "yml", "json", "toml", "properties", "ini", "conf", "env", "md", "mdx", "rst"  // Config & Markup
         )
         
         extensions.forEach { ext ->
@@ -156,6 +148,16 @@ class TodoScannerService(private val project: Project) {
             } catch (ignored: Exception) {
                 // Ignore unknown file types
             }
+        }
+        
+        // Include all registered non-binary text file types available in the IDE runtime (e.g. Rider / C# / WebStorm / PyCharm)
+        try {
+            fileTypeManager.registeredFileTypes.forEach { ft ->
+                if (!ft.isBinary && !types.contains(ft) && ft.name.uppercase() != "UNKNOWN") {
+                    types.add(ft)
+                }
+            }
+        } catch (ignored: Exception) {
         }
         
         return types

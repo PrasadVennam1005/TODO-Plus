@@ -34,6 +34,11 @@ class TodoSettingsConfigurable : Configurable {
     private val issueUrlField = JTextField()
     private val issuePatternField = JTextField()
     
+    // Completion Behavior
+    private val markDoneRadioButton = JRadioButton("Mark as DONE in code (e.g. // DONE(...))")
+    private val deleteCommentRadioButton = JRadioButton("Remove comment line completely from code")
+    private val completionGroup = ButtonGroup()
+
     private var isModified = false
 
     override fun getDisplayName(): String = "TODO++"
@@ -101,10 +106,26 @@ class TodoSettingsConfigurable : Configurable {
         }
         mainPanel.add(issuePanel)
         
-        // --- Load Issue Settings ---
+        // --- Task Completion Behavior Settings ---
+        completionGroup.add(markDoneRadioButton)
+        completionGroup.add(deleteCommentRadioButton)
+        
+        val completionPanel = JPanel(GridLayout(2, 1, 5, 5)).apply {
+            border = BorderFactory.createTitledBorder("Task Completion Action")
+            add(markDoneRadioButton)
+            add(deleteCommentRadioButton)
+        }
+        mainPanel.add(completionPanel)
+
+        // --- Load Settings ---
         val settings = TodoSettingsService.getInstance()
         issueUrlField.text = settings.getState().issueUrlTemplate
         issuePatternField.text = settings.getState().issuePattern
+        if (settings.getState().completionBehavior == TodoSettingsService.BEHAVIOR_DELETE_COMMENT) {
+            deleteCommentRadioButton.isSelected = true
+        } else {
+            markDoneRadioButton.isSelected = true
+        }
 
         settingsPanel?.add(mainPanel, BorderLayout.CENTER)
         
@@ -226,6 +247,10 @@ class TodoSettingsConfigurable : Configurable {
         if (issueUrlField.text != settings.getState().issueUrlTemplate) return true
         if (issuePatternField.text != settings.getState().issuePattern) return true
         
+        // Check completion behavior
+        val selectedBehavior = if (deleteCommentRadioButton.isSelected) TodoSettingsService.BEHAVIOR_DELETE_COMMENT else TodoSettingsService.BEHAVIOR_MARK_DONE
+        if (selectedBehavior != settings.getState().completionBehavior) return true
+
         return false
     }
 
@@ -240,6 +265,7 @@ class TodoSettingsConfigurable : Configurable {
         
         settings.getState().issueUrlTemplate = issueUrlField.text.trim()
         settings.getState().issuePattern = issuePatternField.text.trim()
+        settings.getState().completionBehavior = if (deleteCommentRadioButton.isSelected) TodoSettingsService.BEHAVIOR_DELETE_COMMENT else TodoSettingsService.BEHAVIOR_MARK_DONE
         
         isModified = false
     }
@@ -257,6 +283,11 @@ class TodoSettingsConfigurable : Configurable {
         
         issueUrlField.text = settings.getState().issueUrlTemplate
         issuePatternField.text = settings.getState().issuePattern
+        if (settings.getState().completionBehavior == TodoSettingsService.BEHAVIOR_DELETE_COMMENT) {
+            deleteCommentRadioButton.isSelected = true
+        } else {
+            markDoneRadioButton.isSelected = true
+        }
         
         isModified = false
     }

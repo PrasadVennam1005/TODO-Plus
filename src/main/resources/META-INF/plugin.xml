@@ -8,18 +8,20 @@
     
     <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into a powerful task management system directly within IntelliJ IDEA. Organize, track, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v1.8.0 (Stable & Polished)</h3>
+    <h3>✨ Status: v1.9.0 (Feature Packed Release)</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
+        <li><strong>Multi-Selection & Batch Completion</strong>: Select multiple TODO items or whole group headers and toggle completion in batch!</li>
+        <li><strong>Live Auto-Scan on Typing</strong>: Real-time debounced updates as you type in the editor.</li>
+        <li><strong>Quick Fixes (Alt + Enter)</strong>: Instantly mark TODOs as completed or incomplete directly from your code editor.</li>
+        <li><strong>Progress Bar & Completion Stats</strong>: Live progress bar and completion ratio readout in the status bar.</li>
+        <li><strong>Copy for Standup</strong>: 1-click export of selected/visible TODOs to Slack/Markdown format for daily standups.</li>
+        <li><strong>Multi-Line TODO Support</strong>: Seamlessly extracts indented bullet points and continuation lines under TODO comments.</li>
+        <li><strong>Custom Priority Badges & Full IDE Support</strong>: Visual priority badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) and universal compatibility for Rider, C#, `.cshtml`, `.razor`, `.vue`, `.svelte`, and all JetBrains IDEs.</li>
         <li><strong>Smart Due Date Notifications</strong>: Automatically reminds you via native IDE balloon popups about any TODOs that are overdue or due today!</li>
-        <li><strong>Premium Grouping UI</strong>: Organize TODOs in a sleek Tree view grouped by Priority, Assignee, File, or None.</li>
         <li><strong>Git Blame Integration</strong>: Automatically maps TODOs to their Git Authors when assignees are missing.</li>
-        <li><strong>Live Templates & Quick Fixes</strong>: Type <code>todo+</code> to auto-generate enriched comments, or use <code>Alt+Enter</code> to instantly upgrade basic TODOs.</li>
-        <li><strong>Smart Scanning & Scope Exclusions</strong>: Automatically finds TODOs across 10+ languages. Easily ignore <code>node_modules</code> or <code>build</code> directories to boost performance!</li>
         <li><strong>Export Dashboards</strong>: Export your filtered TODO lists into beautiful, standalone, offline HTML dashboards with priority charts.</li>
-        <li><strong>Issue Tracker Integration</strong>: Click to open GitHub/Jira issues directly from the TODO list (matches <code>PROJ-123</code>).</li>
-        <li><strong>Robust Filtering & Navigation</strong>: Filter by Assignee, Category, or dynamic Tags. Double-click any TODO to jump straight to the exact line of code.</li>
     </ul>
 
     <h3>📝 Usage Examples:</h3>
@@ -29,6 +31,20 @@
     
     <p><em>Installation Note: Please restart the IDE after installation to ensure all features load correctly.</em></p>
     ]]></description>
+
+    <change-notes><![CDATA[
+    <h4>v1.9.0 Release Notes:</h4>
+    <ul>
+        <li><strong>Multi-Selection & Batch Actions</strong>: Select multiple TODOs or group headers and click <code>Mark Completed</code> or <code>Mark Incomplete</code>.</li>
+        <li><strong>Live Auto-Scan</strong>: Real-time background scanning while typing in any editor buffer.</li>
+        <li><strong>Quick Fixes (Alt + Enter)</strong>: Added <code>Mark TODO as Completed</code> and <code>Mark DONE as Incomplete</code> editor intentions.</li>
+        <li><strong>Visual Progress Bar</strong>: High-contrast completion progress bar (e.g. <code>66% (8/12)</code>) in the status footer.</li>
+        <li><strong>Copy for Standup</strong>: 1-click button to format and copy tasks to clipboard for Slack/Teams daily standups.</li>
+        <li><strong>Multi-Line TODO Comments</strong>: Supports indented bullet points and multi-line task descriptions.</li>
+        <li><strong>Enhanced Scope & Rider / CSHTML Support</strong>: Added <code>Entire Solution / Project</code> scope and full support for <code>.cshtml</code>, <code>.razor</code>, <code>.vue</code>, <code>.svelte</code>, <code>.dart</code>, and all non-binary text files.</li>
+        <li><strong>Priority Badges</strong>: Colored badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) rendered in the tree view.</li>
+    </ul>
+    ]]></change-notes>
     
     <!-- Product and plugin compatibility -->
     <!-- Supports IntelliJ IDEA and Android Studio -->
@@ -41,7 +57,7 @@
             id="TODO++" 
             anchor="bottom" 
             factoryClass="com.todoplus.toolwindow.TodoToolWindowFactory"
-            icon="AllIcons.General.TodoDefault"/>
+            icon="AllIcons.Toolwindows.ToolWindowTodo"/>
             
         <!-- Notification Group -->
         <notificationGroup id="TODO++ Notifications" displayType="BALLOON"/>
@@ -62,11 +78,19 @@
         <!-- Live Templates -->
         <defaultLiveTemplates file="/liveTemplates/todo-plus.xml"/>
         
-        <!-- Quick Fix -->
+        <!-- Quick Fixes & Intentions -->
         <intentionAction>
             <className>com.todoplus.actions.UpgradeTodoIntention</className>
             <category>TODO++</category>
             <descriptionDirectoryName>UpgradeTodoIntention</descriptionDirectoryName>
+        </intentionAction>
+        <intentionAction>
+            <className>com.todoplus.actions.MarkTodoCompletedIntention</className>
+            <category>TODO++</category>
+        </intentionAction>
+        <intentionAction>
+            <className>com.todoplus.actions.MarkTodoIncompleteIntention</className>
+            <category>TODO++</category>
         </intentionAction>
         
         <!-- Startup Activity -->

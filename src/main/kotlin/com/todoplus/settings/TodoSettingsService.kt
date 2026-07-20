@@ -35,7 +35,8 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         
         var issueUrlTemplate: String = "" // e.g., https://github.com/user/repo/issues/{id}
         var issuePattern: String = "[A-Z]+-\\d+" // Default: Jira-style (PROJ-123)
-        var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist")
+        var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist", "bin", "obj", "target", ".gradle", "vendor")
+        var completionBehavior: String = BEHAVIOR_MARK_DONE
     }
 
     private var myState = State()
@@ -68,6 +69,9 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
     }
 
     companion object {
+        const val BEHAVIOR_MARK_DONE = "MARK_DONE"
+        const val BEHAVIOR_DELETE_COMMENT = "DELETE_COMMENT"
+
         fun getInstance(): TodoSettingsService = service()
     }
 }

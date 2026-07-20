@@ -11,6 +11,8 @@ import com.todoplus.services.TodoScannerService
  */
 class RefreshTodosAction : AnAction("Refresh TODOs", "Scan project for TODO items", null) {
 
+    override fun getActionUpdateThread(): com.intellij.openapi.actionSystem.ActionUpdateThread = com.intellij.openapi.actionSystem.ActionUpdateThread.EDT
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         

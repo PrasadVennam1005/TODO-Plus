@@ -16,10 +16,11 @@ class TodoExporter {
     fun exportToCsv(todos: List<TodoItem>): String {
         val sb = StringBuilder()
         // Header
-        sb.append("Priority,Due Date,Assignee,Category,Description,File,Line\n")
+        sb.append("Status,Priority,Due Date,Assignee,Category,Description,File,Line\n")
         
         // Data
         for (todo in todos) {
+            sb.append(if (todo.isCompleted) "Done" else "Todo").append(",")
             sb.append(escapeCsv(todo.priority?.name ?: "")).append(",")
             sb.append(escapeCsv(todo.dueDate?.toString() ?: "")).append(",")
             sb.append(escapeCsv(todo.assignee ?: "")).append(",")
@@ -78,11 +79,12 @@ class TodoExporter {
         
         sb.append("## $title\n\n")
         for (todo in items) {
+            val checkbox = if (todo.isCompleted) "[x]" else "[ ]"
             val assigneeStr = if (todo.assignee != null) "**@${todo.assignee}** " else ""
             val categoryStr = if (todo.category != null) "[${todo.category}] " else ""
             val dueStr = if (todo.dueDate != null) "📅 ${todo.dueDate} " else ""
             
-            sb.append("- [ ] $dueStr$assigneeStr$categoryStr${todo.description} (`${todo.getFileName()}:${todo.lineNumber}`)\n")
+            sb.append("- $checkbox $dueStr$assigneeStr$categoryStr${todo.description} (`${todo.getFileName()}:${todo.lineNumber}`)\n")
         }
         sb.append("\n")
     }
