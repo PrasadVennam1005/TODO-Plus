@@ -56,7 +56,7 @@ class TodoScannerService(private val project: Project) {
      * Uses PSI to read from editor buffer (unsaved changes) instead of disk
      */
     fun scanFile(file: VirtualFile): List<TodoItem> {
-        if (!file.isValid || file.isDirectory) {
+        if (!file.isValid || file.isDirectory || file.length > 5 * 1024 * 1024) {
             return emptyList()
         }
 
