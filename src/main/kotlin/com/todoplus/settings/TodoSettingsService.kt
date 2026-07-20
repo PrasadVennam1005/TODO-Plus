@@ -34,6 +34,20 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         fun getColor(): Color = Color(colorRgb)
     }
 
+    /**
+     * Persisted HTML export customisation fields.
+     * All fields default to blank which makes [TodoExporter] use its built-in output.
+     */
+    data class HtmlExportSettings(
+        var pageTitle: String = "",
+        var customCss: String = "",
+        var statsHtmlOverride: String = "",
+        var listHtmlOverride: String = "",
+        var footerHtml: String = ""
+    ) {
+        constructor() : this("", "", "", "", "")
+    }
+
     class State {
         var priorities: MutableList<PriorityConfig> = mutableListOf(
             PriorityConfig("CRITICAL", Color(180, 40, 180).rgb), // Purple
@@ -54,6 +68,7 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         var issuePattern: String = "[A-Z]+-\\d+" // Default: Jira-style (PROJ-123)
         var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist", "bin", "obj", "target", ".gradle", "vendor")
         var completionBehavior: String = BEHAVIOR_MARK_DONE
+        var htmlExport: HtmlExportSettings = HtmlExportSettings()
     }
 
     private var myState = State()
@@ -83,6 +98,27 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
     
     fun setIgnoredDirectories(dirs: List<String>) {
         myState.ignoredDirectories = dirs.toMutableList()
+    }
+
+    fun getHtmlExportConfig(): com.todoplus.exporter.HtmlExportConfig {
+        val s = myState.htmlExport
+        return com.todoplus.exporter.HtmlExportConfig(
+            pageTitle          = s.pageTitle,
+            customCss          = s.customCss,
+            statsHtmlOverride  = s.statsHtmlOverride,
+            listHtmlOverride   = s.listHtmlOverride,
+            footerHtml         = s.footerHtml
+        )
+    }
+
+    fun setHtmlExportConfig(config: com.todoplus.exporter.HtmlExportConfig) {
+        myState.htmlExport = HtmlExportSettings(
+            pageTitle          = config.pageTitle,
+            customCss          = config.customCss,
+            statsHtmlOverride  = config.statsHtmlOverride,
+            listHtmlOverride   = config.listHtmlOverride,
+            footerHtml         = config.footerHtml
+        )
     }
 
     companion object {
