@@ -241,7 +241,7 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         statusLabel.foreground = Gray._120
 
         // Create main panel using SimpleToolWindowPanel
-        mainPanel = SimpleToolWindowPanel(true, true).apply {
+        mainPanel = SimpleToolWindowPanel(true).apply {
             val topPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
                 border = JBUI.Borders.customLineBottom(Gray._200)
                 add(actionToolbar.component, BorderLayout.WEST)
