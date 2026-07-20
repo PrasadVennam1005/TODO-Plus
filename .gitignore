@@ -38,3 +38,6 @@ local.properties
 *.swp
 *~
 /LINKEDIN_POST.md
+
+# GitHub Actions workflows (requires special token scope to push)
+.github/workflows/
