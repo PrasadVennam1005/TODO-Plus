@@ -150,11 +150,7 @@ class TodoSettingsConfigurable : Configurable {
         )
         
         if (name != null) {
-            val color = try {
-                com.intellij.ui.ColorChooserService.getInstance().showDialog(panel, "Choose Color", Color.GRAY, true, emptyList(), false)
-            } catch (e: Throwable) {
-                javax.swing.JColorChooser.showDialog(panel, "Choose Color", Color.GRAY)
-            }
+            val color = javax.swing.JColorChooser.showDialog(panel, "Choose Color", Color.GRAY)
             if (color != null) {
                 priorityListModel.addElement(TodoSettingsService.PriorityConfig(name.uppercase(), color.rgb))
                 isModified = true
@@ -188,11 +184,7 @@ class TodoSettingsConfigurable : Configurable {
         val index = priorityList.selectedIndex
         if (index != -1) {
             val current = priorityListModel.get(index)
-            val color = try {
-                com.intellij.ui.ColorChooserService.getInstance().showDialog(panel, "Choose Color for ${current.name}", current.getColor(), true, emptyList(), false)
-            } catch (e: Throwable) {
-                javax.swing.JColorChooser.showDialog(panel, "Choose Color for ${current.name}", current.getColor())
-            }
+            val color = javax.swing.JColorChooser.showDialog(panel, "Choose Color for ${current.name}", current.getColor())
             if (color != null) {
                 current.colorRgb = color.rgb
                 priorityList.repaint() // Force refresh
