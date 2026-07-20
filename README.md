@@ -1,12 +1,12 @@
 # TODO++ - Enhanced TODO Management for IntelliJ IDEA
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]() 
-[![Version](https://img.shields.io/badge/version-1.9.0-blue)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 Take your TODO comments to the next level! TODO++ adds powerful features to manage, organize, and track TODOs across your entire project.
 
-## 🚀 What's New in v1.9.0 (Ultimate Feature Update)
+## 🚀 What's New in v2.0.0 (Major Milestone Release)
 - 🖱️ **Multi-Selection & Batch Completion**: Select multiple TODO rows or entire group headers to complete or revert in batch.
 - ⚡ **Live Auto-Scan on Typing**: Real-time debounced updates as you type in any editor window.
 - 💡 **Quick Fixes (`Alt + Enter`)**: Instantly mark TODOs as completed (`// DONE`) or incomplete (`// TODO`) directly in code.
