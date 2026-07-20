@@ -16,10 +16,11 @@ class TodoExporter {
     fun exportToCsv(todos: List<TodoItem>): String {
         val sb = StringBuilder()
         // Header
-        sb.append("Priority,Due Date,Assignee,Category,Description,File,Line\n")
+        sb.append("Status,Priority,Due Date,Assignee,Category,Description,File,Line\n")
         
         // Data
         for (todo in todos) {
+            sb.append(if (todo.isCompleted) "Done" else "Todo").append(",")
             sb.append(escapeCsv(todo.priority?.name ?: "")).append(",")
             sb.append(escapeCsv(todo.dueDate?.toString() ?: "")).append(",")
             sb.append(escapeCsv(todo.assignee ?: "")).append(",")
@@ -78,11 +79,12 @@ class TodoExporter {
         
         sb.append("## $title\n\n")
         for (todo in items) {
+            val checkbox = if (todo.isCompleted) "[x]" else "[ ]"
             val assigneeStr = if (todo.assignee != null) "**@${todo.assignee}** " else ""
             val categoryStr = if (todo.category != null) "[${todo.category}] " else ""
             val dueStr = if (todo.dueDate != null) "📅 ${todo.dueDate} " else ""
             
-            sb.append("- [ ] $dueStr$assigneeStr$categoryStr${todo.description} (`${todo.getFileName()}:${todo.lineNumber}`)\n")
+            sb.append("- $checkbox $dueStr$assigneeStr$categoryStr${todo.description} (`${todo.getFileName()}:${todo.lineNumber}`)\n")
         }
         sb.append("\n")
     }
@@ -307,5 +309,15 @@ class TodoExporter {
         """.trimIndent())
         
         return sb.toString()
+    }
+
+    /**
+     * Export TODOs to a clean printable PDF Report
+     */
+    fun exportToPdf(todos: List<TodoItem>): String {
+        return exportToHtml(todos)
+            .replace("<title>TODO++ Dashboard</title>", "<title>TODO++ Executive Task Report</title>")
+            .replace("TODO++ Project Dashboard", "TODO++ Executive Task Report")
+            .replace("</head>", "<style>@media print { body { background: #fff !important; color: #000 !important; padding: 20px; } .stat-card, table { background: #fff !important; border: 1px solid #ccc !important; } th { background: #f0f0f0 !important; color: #000 !important; } td { color: #000 !important; } h1 { color: #000 !important; } }</style></head>")
     }
 }

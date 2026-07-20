@@ -40,11 +40,15 @@ object TodoTreeModelBuilder {
                 }
             }
             TodoGroupBy.PRIORITY -> {
-                val grouped = todos.groupBy { it.priority?.name ?: "None" }
-                // Custom sort for priorities would be ideal, but alphabetical is fine for grouping keys initially
-                grouped.toSortedMap().forEach { (priority, prioTodos) ->
-                    val groupNode = DefaultMutableTreeNode(priority)
-                    prioTodos.forEach { groupNode.add(DefaultMutableTreeNode(it)) }
+                val priorityOrder = listOf("CRITICAL", "HIGH", "MEDIUM", "LOW")
+                val grouped = todos.groupBy { it.priority?.name?.uppercase() ?: "None" }
+                val sortedKeys = grouped.keys.sortedWith(compareBy { key ->
+                    val idx = priorityOrder.indexOf(key)
+                    if (idx != -1) idx else 99
+                })
+                sortedKeys.forEach { key ->
+                    val groupNode = DefaultMutableTreeNode(key)
+                    grouped[key]?.forEach { groupNode.add(DefaultMutableTreeNode(it)) }
                     root.add(groupNode)
                 }
             }

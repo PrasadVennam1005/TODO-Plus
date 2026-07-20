@@ -247,5 +247,73 @@ class TodoParserTest {
         assertEquals("bug", result.category)
         assertNotNull(result.dueDate)
     }
+
+    @Test
+    fun `test parse DONE and COMPLETED comments`() {
+        val doneLine = "// DONE(@john): Completed task"
+        val resultDone = parser.parseLine(doneLine, "test.kt", 1)
+        assertNotNull(resultDone)
+        assertEquals("Completed task", resultDone.description)
+        assertEquals("john", resultDone.assignee)
+        kotlin.test.assertTrue(resultDone.isCompleted)
+
+        val completedLine = "# COMPLETED: Another completed task"
+        val resultCompleted = parser.parseLine(completedLine, "script.py", 1)
+        assertNotNull(resultCompleted)
+        assertEquals("Another completed task", resultCompleted.description)
+        kotlin.test.assertTrue(resultCompleted.isCompleted)
+
+        val tagLine = "// TODO(@alice status:done): Finished task"
+        val resultTag = parser.parseLine(tagLine, "test.kt", 1)
+        assertNotNull(resultTag)
+        kotlin.test.assertTrue(resultTag.isCompleted)
+    }
+
+    @Test
+    fun `test parse multiple TODOs on single line`() {
+        val line = "// TODO(priority:high): Critical bug fix // TODO(@john): Assigned to John // TODO(category:refactor): Code cleanup"
+        val results = parser.parseAllFromLine(line, "test.kt", 1)
+        
+        assertEquals(3, results.size)
+        assertEquals("Critical bug fix", results[0].description)
+        assertEquals(Priority.HIGH, results[0].priority)
+        
+        assertEquals("Assigned to John", results[1].description)
+        assertEquals("john", results[1].assignee)
+        
+        assertEquals("Code cleanup", results[2].description)
+        assertEquals("refactor", results[2].category)
+    }
+
+    @Test
+    fun `test parse multi-line TODO comment`() {
+        val lines = listOf(
+            "// TODO(@john priority:high): Refactor authentication service",
+            "//   - Extract JWT token generator",
+            "//   - Implement refresh token flow",
+            "fun login() {}"
+        )
+        val results = parser.parseLines(lines, "test.kt")
+        
+        assertEquals(1, results.size)
+        assertEquals("john", results[0].assignee)
+        assertEquals(Priority.HIGH, results[0].priority)
+        assertEquals("Refactor authentication service\n- Extract JWT token generator\n- Implement refresh token flow", results[0].description)
+    }
+
+    @Test
+    fun `test parse custom keywords HACK and BUG`() {
+        val customPattern = TodoParser.getTodoPattern(listOf("HACK", "BUG", "NOTE"))
+        val line1 = "// HACK(@alice priority:high): Workaround for safari layout glitch"
+        val line2 = "# BUG(issue:PROJ-99): Memory leak in buffer pool"
+
+        val match1 = customPattern.find(line1)
+        val match2 = customPattern.find(line2)
+
+        assertNotNull(match1)
+        assertEquals("HACK", match1!!.groupValues[1].uppercase())
+        assertNotNull(match2)
+        assertEquals("BUG", match2!!.groupValues[1].uppercase())
+    }
 }
 

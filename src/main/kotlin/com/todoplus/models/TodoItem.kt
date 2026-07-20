@@ -17,7 +17,8 @@ data class TodoItem(
     val lineNumber: Int,
     val fullText: String,
     var vcsAuthor: String? = null,
-    var vcsDate: java.util.Date? = null
+    var vcsDate: java.util.Date? = null,
+    val isCompleted: Boolean = false
 ) {
     fun getFileName(): String = filePath.substringAfterLast('/')
 
@@ -28,7 +29,7 @@ data class TodoItem(
         if (dueDate != null) components.add("[Due: $dueDate]")
         if (category != null) components.add("[$category]")
         // Don't duplicate tags if they are already in properties
-        val displayedTags = tags.filterKeys { it != "priority" && it != "category" && it != "due" && it != "issue" }
+        val displayedTags = tags.filterKeys { it != "priority" && it != "category" && it != "due" && it != "issue" && it != "status" && it != "done" }
         if (displayedTags.isNotEmpty()) {
             val tagsStr = displayedTags.entries.joinToString(" ") { "${it.key}:${it.value}" }
             components.add("($tagsStr)")

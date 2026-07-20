@@ -33,7 +33,23 @@ object TodoTreeTableColumns {
     }
 
     class ItemColumn : TodoColumnInfo("Item") {
-        override fun getTodoValue(todo: TodoItem): String = todo.description
+        override fun getTodoValue(todo: TodoItem): String {
+            val title = todo.description.substringBefore('\n')
+            return if (todo.isCompleted) "✔ $title" else title
+        }
+        override fun getRenderer(item: DefaultMutableTreeNode): TableCellRenderer = ItemRenderer
+    }
+
+    object ItemRenderer : ColoredTableCellRenderer() {
+        override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+            val str = value?.toString() ?: ""
+            if (str.startsWith("✔ ")) {
+                val style = SimpleTextAttributes.STYLE_STRIKEOUT or SimpleTextAttributes.STYLE_ITALIC
+                append(str, SimpleTextAttributes(style, if (selected) null else Gray._150))
+            } else {
+                append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            }
+        }
     }
 
     class PriorityColumn : TodoColumnInfo("Priority") {
@@ -87,19 +103,26 @@ object TodoTreeTableColumns {
     object PriorityRenderer : ColoredTableCellRenderer() {
         override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
             val priorityName = value?.toString() ?: "-"
-            if (selected) {
-                append(priorityName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            if (priorityName == "-" || priorityName.isEmpty()) {
+                append("-", if (selected) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150))
                 return
             }
-            if (priorityName != "-") {
-                val color = com.todoplus.settings.TodoSettingsService.getInstance().getPriorityColor(priorityName)
-                if (color != null) {
-                    append(priorityName, SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color))
-                } else {
-                    append(priorityName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-                }
+
+            val iconSymbol = when (priorityName.uppercase()) {
+                "CRITICAL" -> "🟣 "
+                "HIGH" -> "🔴 "
+                "MEDIUM" -> "🟠 "
+                "LOW" -> "🟢 "
+                else -> "🏷️ "
+            }
+
+            val color = com.todoplus.settings.TodoSettingsService.getInstance().getPriorityColor(priorityName)
+            if (selected) {
+                append("$iconSymbol$priorityName", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+            } else if (color != null) {
+                append("$iconSymbol$priorityName", SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color))
             } else {
-                append("-", SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150))
+                append("$iconSymbol$priorityName", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
             }
         }
     }

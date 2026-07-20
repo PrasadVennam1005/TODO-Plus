@@ -49,6 +49,7 @@ class TodoNotificationActivity : ProjectActivity {
                                 .getNotificationGroup("TODO++ Notifications")
                                 .createNotification("TODOs Need Attention", message, NotificationType.WARNING)
                                 .addAction(object : AnAction("View TODOs") {
+                                    override fun getActionUpdateThread(): com.intellij.openapi.actionSystem.ActionUpdateThread = com.intellij.openapi.actionSystem.ActionUpdateThread.EDT
                                     override fun actionPerformed(e: AnActionEvent) {
                                         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("TODO++")
                                         toolWindow?.show()

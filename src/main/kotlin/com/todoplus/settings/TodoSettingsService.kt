@@ -25,6 +25,15 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         fun getColor(): Color = Color(colorRgb)
     }
 
+    data class CustomKeywordConfig(
+        var keyword: String = "",
+        var colorRgb: Int = 0,
+        var iconSymbol: String = "🏷️"
+    ) {
+        constructor() : this("", 0, "🏷️")
+        fun getColor(): Color = Color(colorRgb)
+    }
+
     class State {
         var priorities: MutableList<PriorityConfig> = mutableListOf(
             PriorityConfig("CRITICAL", Color(180, 40, 180).rgb), // Purple
@@ -33,9 +42,18 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
             PriorityConfig("LOW", Color(80, 160, 80).rgb)       // Green
         )
         
+        var customKeywords: MutableList<CustomKeywordConfig> = mutableListOf(
+            CustomKeywordConfig("HACK", Color(200, 100, 40).rgb, "⚡"),
+            CustomKeywordConfig("BUG", Color(220, 50, 50).rgb, "🐛"),
+            CustomKeywordConfig("NOTE", Color(40, 140, 200).rgb, "📌"),
+            CustomKeywordConfig("OPTIMIZE", Color(140, 80, 200).rgb, "🚀")
+        )
+        
+        var enableAudioFeedback: Boolean = true
         var issueUrlTemplate: String = "" // e.g., https://github.com/user/repo/issues/{id}
         var issuePattern: String = "[A-Z]+-\\d+" // Default: Jira-style (PROJ-123)
-        var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist")
+        var ignoredDirectories: MutableList<String> = mutableListOf("build", "node_modules", ".idea", ".git", "out", "dist", "bin", "obj", "target", ".gradle", "vendor")
+        var completionBehavior: String = BEHAVIOR_MARK_DONE
     }
 
     private var myState = State()
@@ -68,6 +86,9 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
     }
 
     companion object {
+        const val BEHAVIOR_MARK_DONE = "MARK_DONE"
+        const val BEHAVIOR_DELETE_COMMENT = "DELETE_COMMENT"
+
         fun getInstance(): TodoSettingsService = service()
     }
 }

@@ -1,10 +1,24 @@
 # TODO++ - Enhanced TODO Management for IntelliJ IDEA
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]() 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 Take your TODO comments to the next level! TODO++ adds powerful features to manage, organize, and track TODOs across your entire project.
+
+## 🚀 What's New in v2.0.0 (Major Milestone Release)
+- 🖱️ **Multi-Selection & Batch Completion**: Select multiple TODO rows or entire group headers to complete or revert in batch.
+- ⚡ **Live Auto-Scan on Typing**: Real-time debounced updates as you type in any editor window.
+- 💡 **Quick Fixes (`Alt + Enter`)**: Instantly mark TODOs as completed (`// DONE`) or incomplete (`// TODO`) directly in code.
+- 📊 **Visual Completion Progress Bar**: High-contrast progress bar (`66% (8/12)`) in the tool window status bar.
+- 📋 **Copy for Standup**: 1-click export of selected tasks to Markdown/Slack checklist format for daily standups.
+- 📝 **Multi-Line TODO Comment Support**: Automatically parses indented bullet points and continuation lines.
+- ⚙️ **Custom Keyword Recognition**: Recognizes `HACK:`, `BUG:`, `NOTE:`, `OPTIMIZE:` alongside `TODO` / `FIXME`.
+- 🔊 **Interactive Audio Feedback**: Crisp audio chimes when checking off tasks as completed.
+- 📄 **Executive PDF & HTML Reports**: 1-click printable PDF report generation with automatic browser preview.
+- 🌐 **Rider & CSHTML / Solution Support**: Added `Entire Solution / Project` scope and full support for `.cshtml`, `.razor`, `.vue`, `.svelte`, `.dart`, and all JetBrains IDEs.
+- 🎨 **Priority Badges**: Visual priority badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) rendered in the tree view.
+- 🧹 **100% Deprecated API Free**: Fully verified against IntelliJ 2024.1+ APIs with 0 warnings.
 
 ## ✨ Features
 
