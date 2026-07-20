@@ -310,4 +310,14 @@ class TodoExporter {
         
         return sb.toString()
     }
+
+    /**
+     * Export TODOs to a clean printable PDF Report
+     */
+    fun exportToPdf(todos: List<TodoItem>): String {
+        return exportToHtml(todos)
+            .replace("<title>TODO++ Dashboard</title>", "<title>TODO++ Executive Task Report</title>")
+            .replace("TODO++ Project Dashboard", "TODO++ Executive Task Report")
+            .replace("</head>", "<style>@media print { body { background: #fff !important; color: #000 !important; padding: 20px; } .stat-card, table { background: #fff !important; border: 1px solid #ccc !important; } th { background: #f0f0f0 !important; color: #000 !important; } td { color: #000 !important; } h1 { color: #000 !important; } }</style></head>")
+    }
 }

@@ -16,12 +16,25 @@ import com.todoplus.models.TodoItem
 class TodoParser(private val issuePattern: String = "") {
 
     companion object {
-        // Regex pattern to match TODO, FIXME, DONE, or COMPLETED comments with optional metadata
-        // Matches: // TODO... or // DONE... or # TODO... or -- TODO... or /* TODO...
-        private val TODO_PATTERN = Regex(
-            """(?://|#|--|/\*)\s*(TODO|FIXME|DONE|COMPLETED)\s*(?:\((.*?)\))?\s*:\s*(.*?)(?=(?://|#|--|/\*)\s*(?:TODO|FIXME|DONE|COMPLETED)\b|${'$'})""",
-            RegexOption.IGNORE_CASE
-        )
+        fun getTodoPattern(customKeywords: List<String> = emptyList()): Regex {
+            val baseKeywords = listOf("TODO", "FIXME", "DONE", "COMPLETED")
+            val allKeywords = (baseKeywords + customKeywords).filter { it.isNotBlank() }.distinct().map { Regex.escape(it) }
+            val joined = allKeywords.joinToString("|")
+            return Regex(
+                """(?://|#|--|/\*)\s*($joined)\s*(?:\((.*?)\))?\s*:\s*(.*?)(?=(?://|#|--|/\*)\s*(?:$joined)\b|${'$'})""",
+                RegexOption.IGNORE_CASE
+            )
+        }
+
+        private val TODO_PATTERN: Regex
+            get() {
+                val custom = try {
+                    com.todoplus.settings.TodoSettingsService.getInstance().state.customKeywords.map { it.keyword }
+                } catch (e: Throwable) {
+                    emptyList()
+                }
+                return getTodoPattern(custom)
+            }
 
         // Pattern to extract assignee: @username
         private val ASSIGNEE_PATTERN = Regex("""@(\w+)""")

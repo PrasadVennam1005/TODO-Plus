@@ -300,5 +300,20 @@ class TodoParserTest {
         assertEquals(Priority.HIGH, results[0].priority)
         assertEquals("Refactor authentication service\n- Extract JWT token generator\n- Implement refresh token flow", results[0].description)
     }
+
+    @Test
+    fun `test parse custom keywords HACK and BUG`() {
+        val customPattern = TodoParser.getTodoPattern(listOf("HACK", "BUG", "NOTE"))
+        val line1 = "// HACK(@alice priority:high): Workaround for safari layout glitch"
+        val line2 = "# BUG(issue:PROJ-99): Memory leak in buffer pool"
+
+        val match1 = customPattern.find(line1)
+        val match2 = customPattern.find(line2)
+
+        assertNotNull(match1)
+        assertEquals("HACK", match1!!.groupValues[1].uppercase())
+        assertNotNull(match2)
+        assertEquals("BUG", match2!!.groupValues[1].uppercase())
+    }
 }
 

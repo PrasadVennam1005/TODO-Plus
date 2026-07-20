@@ -98,6 +98,11 @@ object ToggleTodoCompletedAction {
         })
 
         com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+            if (markAsCompleted) {
+                com.todoplus.audio.SoundEffectsService.getInstance().playCompleteSound()
+            } else {
+                com.todoplus.audio.SoundEffectsService.getInstance().playIncompleteSound()
+            }
             onComplete()
         }
     }

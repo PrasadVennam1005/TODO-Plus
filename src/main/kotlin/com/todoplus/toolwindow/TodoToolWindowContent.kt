@@ -209,6 +209,10 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                 override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
                 override fun actionPerformed(e: AnActionEvent) { exportTodos("html") }
             })
+            add(object : AnAction("Export PDF Report", "Generate printable PDF report", AllIcons.Actions.MenuOpen) {
+                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                override fun actionPerformed(e: AnActionEvent) { exportTodos("pdf") }
+            })
             add(object : AnAction("Copy for Standup", "Copy formatted TODO list to Clipboard for Slack/Teams standup", AllIcons.Actions.Copy) {
                 override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
                 override fun actionPerformed(e: AnActionEvent) { copyForStandup() }
@@ -735,13 +739,14 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                 "csv" -> TodoExporter().exportToCsv(todosToExport)
                 "md" -> TodoExporter().exportToMarkdown(todosToExport)
                 "html" -> TodoExporter().exportToHtml(todosToExport)
+                "pdf" -> TodoExporter().exportToPdf(todosToExport)
                 else -> ""
             }
             
             file.writeText(content)
             
-            // Auto-open HTML Dashboard
-            if (format == "html") {
+            // Auto-open HTML Dashboard / PDF Report
+            if (format == "html" || format == "pdf") {
                 BrowserUtil.browse(file.toURI().toString())
             }
             
