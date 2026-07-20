@@ -315,5 +315,57 @@ class TodoParserTest {
         assertNotNull(match2)
         assertEquals("BUG", match2!!.groupValues[1].uppercase())
     }
-}
 
+    // ── Block comment regression tests (reported: /* TODO */ not detected) ──
+
+    @Test
+    fun `parse TODO inside standalone block comment`() {
+        val line = "/* TODO: Hi this is a todo */"
+        val result = parser.parseLine(line, "test.kt", 1)
+        assertNotNull(result, "Should detect TODO inside /* ... */")
+        assertEquals("Hi this is a todo", result!!.description)
+    }
+
+    @Test
+    fun `parse TODO inside mid-line block comment`() {
+        val line = "if (true /* TODO: Hi this is a todo in a comment too!*/ ) {"
+        val result = parser.parseLine(line, "test.kt", 5)
+        assertNotNull(result, "Should detect TODO inside a mid-line /* ... */ block comment")
+        assertEquals("Hi this is a todo in a comment too!", result!!.description)
+    }
+
+    @Test
+    fun `parse TODO inside block comment with metadata`() {
+        val line = "doSomething(/* TODO(@john priority:high): Fix this */value)"
+        val result = parser.parseLine(line, "test.kt", 10)
+        assertNotNull(result, "Should detect TODO with metadata inside /* ... */")
+        assertEquals("Fix this", result!!.description)
+        assertEquals("john", result.assignee)
+        assertEquals(Priority.HIGH, result.priority)
+    }
+
+    @Test
+    fun `parse TODO inside javadoc-style block comment`() {
+        val line = "/** TODO: Implement this method */"
+        val result = parser.parseLine(line, "test.kt", 1)
+        assertNotNull(result, "Should detect TODO inside /** ... */")
+        assertEquals("Implement this method", result!!.description)
+    }
+
+    @Test
+    fun `description does not include trailing block comment close`() {
+        val line = "/* TODO: Clean up */"
+        val result = parser.parseLine(line, "test.kt", 1)
+        assertNotNull(result)
+        assertEquals("Clean up", result!!.description)
+    }
+
+    @Test
+    fun `inline block comment TODO alongside line comment TODO`() {
+        val line = "val x = 1 /* TODO: block comment */ + y // TODO: line comment"
+        val results = parser.parseAllFromLine(line, "test.kt", 1)
+        assertEquals(2, results.size)
+        assertEquals("block comment", results[0].description)
+        assertEquals("line comment", results[1].description)
+    }
+}
