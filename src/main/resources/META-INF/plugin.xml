@@ -8,7 +8,7 @@
     
     <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into a powerful task management system directly within IntelliJ IDEA. Organize, track, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v2.0.0 (Major Milestone Release)</h3>
+    <h3>✨ Status: v2.1.0</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
@@ -35,6 +35,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <h4>v2.1.0 Release Notes:</h4>
+    <ul>
+        <li><strong>Block Comment TODO Detection</strong>: TODOs inside <code>/* TODO: ... */</code> and mid-line <code>if (x /* TODO: ... */) {</code> are now correctly detected across all supported languages.</li>
+        <li><strong>Javadoc / KDoc Support</strong>: <code>/** TODO: ... */</code> style comments are now scanned.</li>
+        <li><strong>Customisable HTML Export</strong>: Override the page title, CSS styles (including criticality colours), stats counters block, list/table section, and add a custom footer — all from Settings.</li>
+        <li><strong>Priority Group Sorting</strong>: When grouped by Priority, tree nodes now sort by urgency (Critical → High → Medium → Low) instead of alphabetically.</li>
+        <li><strong>Large File Safety Guard</strong>: Files over 5MB are automatically skipped to prevent out-of-memory errors on large generated assets.</li>
+    </ul>
     <h4>v2.0.0 Major Milestone Release Notes:</h4>
     <ul>
         <li><strong>Multi-Selection & Batch Actions</strong>: Select multiple TODOs or group headers and click <code>Mark Completed</code> or <code>Mark Incomplete</code>.</li>
