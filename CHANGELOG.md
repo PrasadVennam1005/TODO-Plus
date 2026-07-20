@@ -6,7 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 
 ---
 
+## [2.1.0] – 2026-07-21
+
+### 🐛 Bug Fixes
+- **Block comment TODO detection**: TODOs inside `/* TODO: ... */` (standalone and mid-line) were silently ignored. Fixed by updating the regex prefix from `/\*` → `/\*+` so it matches `/*`, `/**`, and `/***` delimiters, and adding `*/` as a description boundary in the lookahead
+- **Javadoc / KDoc detection**: `/** TODO: ... */` style comments now correctly detected
+- **Description clean-up**: Trailing `*/` is no longer included in the captured TODO description
+
+### ✨ New Features
+- **Customisable HTML Export** (`HtmlExportConfig`): Override any of 5 sections of the exported HTML dashboard — page title, custom CSS (including criticality-level colours), stats counter block (with `{{TOTAL/CRITICAL/HIGH/MEDIUM/LOW}}` tokens), the list/table section (`{{ROWS}}` token), and a custom footer. Config is persisted in IDE settings XML
+
+### 🔧 Improvements
+- **Priority group urgency sorting**: When grouped by Priority in the tree, groups now sort `CRITICAL → HIGH → MEDIUM → LOW → None` instead of alphabetically
+- **Large file safety guard**: Files over 5 MB are automatically skipped during scanning to prevent `OutOfMemoryError` on generated assets and logs
+
+---
+
 ## [2.0.0] – 2026-07-20
+
 
 ### ✨ New Features
 - **Live Auto-Scan**: TODO list updates automatically within 500ms as you type — no manual refresh needed

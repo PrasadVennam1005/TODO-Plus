@@ -5,23 +5,39 @@ import com.todoplus.models.TodoItem
 
 /**
  * Parser for extracting enhanced TODO comments from code
- * 
- * Supports formats:
- * - // TODO: Simple todo
- * - // TODO(@john): Todo with assignee
- * - // TODO(priority:high): Todo with priority
- * - // TODO(category:bug): Todo with category
- * - // TODO(@john priority:high category:bug): Full format
+ *
+ * Supported comment styles:
+ * - `// TODO: Simple todo`
+ * - `# TODO: Python / shell style`
+ * - `-- TODO: SQL style`
+ * - `/* TODO: Block comment (standalone or mid-line) */`
+ * - `/** TODO: Javadoc / KDoc style */`
+ * - `if (condition /* TODO: inline block comment */) { ... }`
+ * - `// TODO(@john): Todo with assignee`
+ * - `// TODO(priority:high): Todo with priority`
+ * - `// TODO(category:bug): Todo with category`
+ * - `// TODO(@john priority:high category:bug): Full format`
  */
 class TodoParser(private val issuePattern: String = "") {
 
     companion object {
         fun getTodoPattern(customKeywords: List<String> = emptyList()): Regex {
             val baseKeywords = listOf("TODO", "FIXME", "DONE", "COMPLETED")
-            val allKeywords = (baseKeywords + customKeywords).filter { it.isNotBlank() }.distinct().map { Regex.escape(it) }
+            val allKeywords = (baseKeywords + customKeywords)
+                .filter { it.isNotBlank() }.distinct().map { Regex.escape(it) }
             val joined = allKeywords.joinToString("|")
+            // Matches TODO keywords that appear after any supported comment delimiter:
+            //   //  →  line comment (Java, Kotlin, JS, C...)
+            //   #   →  Python, Shell, Ruby, YAML...
+            //   --  →  SQL, Lua
+            //   /*  →  block comments, including mid-line:  if (x /* TODO: ... */ ) {
+            //   /**+  →  Javadoc / KDoc block comments
+            // Description capture stops at:
+            //   - next TODO keyword on the same line (lookahead)
+            //   - end of comment block  */
+            //   - end of line
             return Regex(
-                """(?://|#|--|/\*)\s*($joined)\s*(?:\((.*?)\))?\s*:\s*(.*?)(?=(?://|#|--|/\*)\s*(?:$joined)\b|${'$'})""",
+                """(?://|#|--|/\*+)\s*($joined)\s*(?:\((.*?)\))?\s*:\s*(.*?)(?=(?://|#|--|/\*+)\s*(?:$joined)\b|\*/|${'$'})""",
                 RegexOption.IGNORE_CASE
             )
         }

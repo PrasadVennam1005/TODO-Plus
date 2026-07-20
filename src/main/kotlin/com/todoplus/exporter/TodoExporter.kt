@@ -99,14 +99,25 @@ class TodoExporter {
     }
 
     /**
-     * Export TODOs to a beautiful HTML Dashboard
+     * Export TODOs to a beautiful HTML Dashboard.
+     *
+     * @param todos   the items to render
+     * @param config  optional user customisations; defaults to [HtmlExportConfig.default]
+     *                which produces the identical output as before this change.
      */
-    fun exportToHtml(todos: List<TodoItem>): String {
-        val criticalCount = todos.count { it.priority?.name == "CRITICAL" }
-        val highCount = todos.count { it.priority?.name == "HIGH" }
-        val medCount = todos.count { it.priority?.name == "MEDIUM" }
-        val lowCount = todos.count { it.priority?.name == "LOW" }
-        
+    @JvmOverloads
+    fun exportToHtml(
+        todos: List<TodoItem>,
+        config: HtmlExportConfig = HtmlExportConfig.default()
+    ): String {
+        val criticalCount = todos.count { it.priority?.name?.uppercase() == "CRITICAL" }
+        val highCount     = todos.count { it.priority?.name?.uppercase() == "HIGH" }
+        val medCount      = todos.count { it.priority?.name?.uppercase() == "MEDIUM" }
+        val lowCount      = todos.count { it.priority?.name?.uppercase() == "LOW" }
+
+        val title = config.pageTitle.ifBlank { "TODO++ Dashboard" }
+
+        // ── Section 1: <head> + stats cards ─────────────────────────────────
         val sb = StringBuilder()
         sb.append("""
             <!DOCTYPE html>
@@ -114,7 +125,7 @@ class TodoExporter {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>TODO++ Dashboard</title>
+                <title>$title</title>
                 <style>
                     :root {
                         --bg-main: #0d1117;
@@ -135,10 +146,7 @@ class TodoExporter {
                         margin: 0;
                         padding: 40px;
                     }
-                    .container {
-                        max-width: 1200px;
-                        margin: 0 auto;
-                    }
+                    .container { max-width: 1200px; margin: 0 auto; }
                     .header {
                         display: flex;
                         justify-content: space-between;
@@ -148,11 +156,7 @@ class TodoExporter {
                         padding-bottom: 20px;
                     }
                     .header h1 { margin: 0; color: white; }
-                    .stats {
-                        display: flex;
-                        gap: 20px;
-                        margin-bottom: 40px;
-                    }
+                    .stats { display: flex; gap: 20px; margin-bottom: 40px; }
                     .stat-card {
                         background: var(--bg-card);
                         border: 1px solid var(--border-color);
@@ -165,10 +169,10 @@ class TodoExporter {
                     .stat-value { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
                     .stat-label { font-size: 14px; color: #8b949e; text-transform: uppercase; }
                     .stat-CRITICAL { color: var(--critical); }
-                    .stat-HIGH { color: var(--high); }
-                    .stat-MEDIUM { color: var(--medium); }
-                    .stat-LOW { color: var(--low); }
-                    
+                    .stat-HIGH     { color: var(--high); }
+                    .stat-MEDIUM   { color: var(--medium); }
+                    .stat-LOW      { color: var(--low); }
+
                     table {
                         width: 100%;
                         border-collapse: collapse;
@@ -178,47 +182,50 @@ class TodoExporter {
                         border: 1px solid var(--border-color);
                         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                     }
-                    th, td {
-                        padding: 12px 16px;
-                        text-align: left;
-                        border-bottom: 1px solid var(--border-color);
-                    }
-                    th {
-                        background-color: #1c2128;
-                        font-weight: 600;
-                        color: white;
-                    }
+                    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+                    th { background-color: #1c2128; font-weight: 600; color: white; }
                     tr:last-child td { border-bottom: none; }
                     tr:hover { background-color: rgba(255,255,255,0.02); }
-                    
+
                     .badge {
-                        padding: 4px 8px;
-                        border-radius: 20px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        display: inline-block;
+                        padding: 4px 8px; border-radius: 20px;
+                        font-size: 12px; font-weight: 600; display: inline-block;
                     }
-                    .badge-CRITICAL { background: rgba(137, 87, 229, 0.2); color: #bc8cff; border: 1px solid var(--critical); }
-                    .badge-HIGH { background: rgba(248, 81, 73, 0.2); color: #ff7b72; border: 1px solid var(--high); }
-                    .badge-MEDIUM { background: rgba(210, 153, 34, 0.2); color: #e3b341; border: 1px solid var(--medium); }
-                    .badge-LOW { background: rgba(63, 185, 80, 0.2); color: #56d364; border: 1px solid var(--low); }
-                    .badge-NONE { background: rgba(139, 148, 158, 0.2); color: #8b949e; border: 1px solid var(--border-color); }
-                    
+                    .badge-CRITICAL { background: rgba(137,87,229,0.2);  color: #bc8cff; border: 1px solid var(--critical); }
+                    .badge-HIGH     { background: rgba(248,81,73,0.2);   color: #ff7b72; border: 1px solid var(--high); }
+                    .badge-MEDIUM   { background: rgba(210,153,34,0.2);  color: #e3b341; border: 1px solid var(--medium); }
+                    .badge-LOW      { background: rgba(63,185,80,0.2);   color: #56d364; border: 1px solid var(--low); }
+                    .badge-NONE     { background: rgba(139,148,158,0.2); color: #8b949e; border: 1px solid var(--border-color); }
+
                     .tag-list { display: flex; gap: 6px; flex-wrap: wrap; }
                     .tag {
                         background: #21262d; border: 1px solid var(--border-color);
                         padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #8b949e;
                     }
                     .code-ref { font-family: monospace; color: #a5d6ff; font-size: 13px; }
+                    ${config.customCss}
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>TODO++ Project Dashboard</h1>
+                        <h1>$title</h1>
                         <span style="color:#8b949e">Generated on ${java.time.LocalDate.now()}</span>
                     </div>
-                    
+        """.trimIndent())
+
+        // Stats section — user override or built-in cards
+        if (config.statsHtmlOverride.isNotBlank()) {
+            sb.append(
+                config.statsHtmlOverride
+                    .replace("{{TOTAL}}", todos.size.toString())
+                    .replace("{{CRITICAL}}", criticalCount.toString())
+                    .replace("{{HIGH}}", highCount.toString())
+                    .replace("{{MEDIUM}}", medCount.toString())
+                    .replace("{{LOW}}", lowCount.toString())
+            )
+        } else {
+            sb.append("""
                     <div class="stats">
                         <div class="stat-card">
                             <div class="stat-value">${todos.size}</div>
@@ -241,38 +248,24 @@ class TodoExporter {
                             <div class="stat-label">Low Priority</div>
                         </div>
                     </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Priority</th>
-                                <th>Task Description</th>
-                                <th>Assignee</th>
-                                <th>Tags & Categories</th>
-                                <th>Location</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        """.trimIndent())
-        
-        // Sort by priority (CRITICAL -> LOW -> NONE), then by due date
+            """.trimIndent())
+        }
+
+        // ── Section 2: list / table rows ────────────────────────────────────
+        // Sort by priority (CRITICAL → LOW → NONE), then by due date
         val sortedTodos = todos.sortedWith(
-            compareBy<TodoItem> { 
-                when(it.priority?.name?.uppercase()) {
-                    "CRITICAL" -> 0
-                    "HIGH" -> 1
-                    "MEDIUM" -> 2
-                    "LOW" -> 3
-                    else -> 4
+            compareBy<TodoItem> {
+                when (it.priority?.name?.uppercase()) {
+                    "CRITICAL" -> 0; "HIGH" -> 1; "MEDIUM" -> 2; "LOW" -> 3; else -> 4
                 }
             }.thenBy { it.dueDate?.toString() ?: "9999-99-99" }
         )
-        
+
+        val rowsHtml = StringBuilder()
         for (todo in sortedTodos) {
-            val pName = todo.priority?.name?.uppercase() ?: "NONE"
+            val pName      = todo.priority?.name?.uppercase() ?: "NONE"
             val badgeClass = "badge-$pName"
-            
-            // Build Tags HTML
+
             val tagsHtml = StringBuilder("""<div class="tag-list">""")
             if (todo.category != null) tagsHtml.append("""<span class="tag">cat: ${todo.category}</span>""")
             if (todo.dueDate != null) {
@@ -283,13 +276,12 @@ class TodoExporter {
             if (todo.issueId != null) tagsHtml.append("""<span class="tag" style="color:#a5d6ff; border-color:#58a6ff">ref: ${todo.issueId}</span>""")
             todo.tags.forEach { (k, v) -> tagsHtml.append("""<span class="tag">$k: $v</span>""") }
             tagsHtml.append("</div>")
-            
-            // Basic HTML escaping
-            val desc = todo.description.replace("<", "&lt;").replace(">", "&gt;")
-            val file = todo.getFileName().replace("<", "&lt;").replace(">", "&gt;")
+
+            val desc     = todo.description.replace("<", "&lt;").replace(">", "&gt;")
+            val file     = todo.getFileName().replace("<", "&lt;").replace(">", "&gt;")
             val assignee = todo.assignee ?: todo.vcsAuthor ?: "-"
-            
-            sb.append("""
+
+            rowsHtml.append("""
                 <tr>
                     <td><span class="badge $badgeClass">${todo.priority?.name ?: "-"}</span></td>
                     <td style="color:white; font-weight:500;">$desc</td>
@@ -299,25 +291,56 @@ class TodoExporter {
                 </tr>
             """.trimIndent())
         }
-        
-        sb.append("""
+
+        if (config.listHtmlOverride.isNotBlank()) {
+            sb.append(config.listHtmlOverride.replace("{{ROWS}}", rowsHtml.toString()))
+        } else {
+            sb.append("""
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>Task Description</th>
+                                <th>Assignee</th>
+                                <th>Tags &amp; Categories</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            $rowsHtml
                         </tbody>
                     </table>
+            """.trimIndent())
+        }
+
+        // ── Section 3: footer + closing tags ────────────────────────────────
+        sb.append("""
                 </div>
+                ${if (config.footerHtml.isNotBlank()) config.footerHtml else ""}
             </body>
             </html>
         """.trimIndent())
-        
+
         return sb.toString()
     }
 
     /**
-     * Export TODOs to a clean printable PDF Report
+     * Export TODOs to a clean printable PDF Report.
+     * Uses an [HtmlExportConfig] that overrides the title and injects print CSS.
      */
     fun exportToPdf(todos: List<TodoItem>): String {
-        return exportToHtml(todos)
-            .replace("<title>TODO++ Dashboard</title>", "<title>TODO++ Executive Task Report</title>")
-            .replace("TODO++ Project Dashboard", "TODO++ Executive Task Report")
-            .replace("</head>", "<style>@media print { body { background: #fff !important; color: #000 !important; padding: 20px; } .stat-card, table { background: #fff !important; border: 1px solid #ccc !important; } th { background: #f0f0f0 !important; color: #000 !important; } td { color: #000 !important; } h1 { color: #000 !important; } }</style></head>")
+        val printCss = """
+            @media print {
+                body { background: #fff !important; color: #000 !important; padding: 20px; }
+                .stat-card, table { background: #fff !important; border: 1px solid #ccc !important; }
+                th { background: #f0f0f0 !important; color: #000 !important; }
+                td { color: #000 !important; }
+                h1 { color: #000 !important; }
+            }
+        """.trimIndent()
+        return exportToHtml(
+            todos,
+            HtmlExportConfig(pageTitle = "TODO++ Executive Task Report", customCss = printCss)
+        )
     }
 }

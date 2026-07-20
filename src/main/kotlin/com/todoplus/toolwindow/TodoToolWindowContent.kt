@@ -736,11 +736,14 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         try {
             val file = virtualFileWrapper.file
             val content = when (format) {
-                "csv" -> TodoExporter().exportToCsv(todosToExport)
-                "md" -> TodoExporter().exportToMarkdown(todosToExport)
-                "html" -> TodoExporter().exportToHtml(todosToExport)
-                "pdf" -> TodoExporter().exportToPdf(todosToExport)
-                else -> ""
+                "csv"  -> TodoExporter().exportToCsv(todosToExport)
+                "md"   -> TodoExporter().exportToMarkdown(todosToExport)
+                "html" -> TodoExporter().exportToHtml(
+                    todosToExport,
+                    com.todoplus.settings.TodoSettingsService.getInstance().getHtmlExportConfig()
+                )
+                "pdf"  -> TodoExporter().exportToPdf(todosToExport)
+                else   -> ""
             }
             
             file.writeText(content)
