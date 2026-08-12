@@ -1,25 +1,19 @@
 # TODO++ - Enhanced TODO Management for IntelliJ IDEA
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)]()
+[![Version](https://img.shields.io/badge/version-2.3.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 Take your TODO comments to the next level! TODO++ adds powerful features to manage, organize, and track TODOs across your entire project.
 
-## 🚀 What's New in v2.1.0
+## 🚀 What's New in v2.3.0
 
-- 🖱️ **Multi-Selection & Batch Completion**: Select multiple TODO rows or entire group headers to complete or revert in batch.
-- ⚡ **Live Auto-Scan on Typing**: Real-time debounced updates as you type in any editor window.
-- 💡 **Quick Fixes (`Alt + Enter`)**: Instantly mark TODOs as completed (`// DONE`) or incomplete (`// TODO`) directly in code.
-- 📊 **Visual Completion Progress Bar**: High-contrast progress bar (`66% (8/12)`) in the tool window status bar.
-- 📋 **Copy for Standup**: 1-click export of selected tasks to Markdown/Slack checklist format for daily standups.
-- 📝 **Multi-Line TODO Comment Support**: Automatically parses indented bullet points and continuation lines.
-- ⚙️ **Custom Keyword Recognition**: Recognizes `HACK:`, `BUG:`, `NOTE:`, `OPTIMIZE:` alongside `TODO` / `FIXME`.
-- 🔊 **Interactive Audio Feedback**: Crisp audio chimes when checking off tasks as completed.
-- 📄 **Executive PDF & HTML Reports**: 1-click printable PDF report generation with automatic browser preview.
-- 🌐 **Rider & CSHTML / Solution Support**: Added `Entire Solution / Project` scope and full support for `.cshtml`, `.razor`, `.vue`, `.svelte`, `.dart`, and all JetBrains IDEs.
-- 🎨 **Priority Badges**: Visual priority badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) rendered in the tree view.
-- 🧹 **100% Deprecated API Free**: Fully verified against IntelliJ 2024.1+ APIs with 0 warnings.
+- 🐱 **GitHub Issues REST Export**: Export any TODO task directly as a new GitHub repository issue (`POST /repos/{owner}/{repo}/issues`) via right-click context menu or toolbar.
+- 🔷 **Jira Cloud REST Export**: Export any TODO task directly to Jira Cloud (`POST /rest/api/3/issue`) with formatted markdown descriptions and project field mapping.
+- 💬 **Slack & Discord Overdue Webhooks**: 1-click dispatch of formatted Overdue TODO alert notifications directly to Slack (Block Kit) or Discord (Embed) webhook endpoints.
+- ⚡ **5,000+ Item Rendering Optimization**: Smart top-level group expansion and 200ms `Alarm` live filter debouncing prevent UI thread freezing on massive codebases.
+- ⚙️ **Integrations & Webhooks Settings**: New credentials and sample URL template configuration in **Settings > Tools > TODO++**.
+- 🚀 **Automated JetBrains Marketplace CI/CD**: Fully automated Gradle publishing workflow for [JetBrains Marketplace](https://plugins.jetbrains.com/).
 
 ## ✨ Features
 
@@ -40,14 +34,20 @@ Assign TODOs to team members, set priorities, add due dates, and track issues:
 - **Visual Alerts**: Overdue items are highlighted in **RED**. Items due soon are **ORANGE**.
 - **Sorting**: Sort the TODO list by due date to see what's urgent.
 
-### 🔗 Issue Tracker & Git Integration
+### 🌐 Direct GitHub / Jira REST Issue Export
 
-- **Git Blame**: Automatically fetches the Author and Date Added for your TODOs from version control.
-- **Link Issues**: Add `issue:ID` (e.g., `issue:PROJ-123`) to your TODOs.
-- **Auto-Detection**: Configure regex patterns (e.g., `[A-Z]+-\d+`) to automatically detect issue IDs in descriptions.
-- **Quick Access**: Right-click any TODO to "Open in Issue Tracker" (Jira, GitHub, GitLab, etc.).
+- **1-Click Issue Creation**: Right-click any TODO task in the tool window and click **Export Task to GitHub Issue** or **Export Task to Jira Issue**.
+- **Formatted Payloads**: Automatically populates title, description, code line location, file path, priority badges, tags, and due dates.
+- **Direct Link Toast**: Pops an interactive notification toast with a direct link to the newly created issue (e.g. `https://github.com/my-org/my-repo/issues/42`).
 
-### 🎨 Custom Priorities & Colors
+### 💬 Slack & Discord Overdue Webhook Alerts
+
+- **Team Notifications**: Click **Send Overdue Webhook Alerts** to post formatted Slack (Block Kit) or Discord (Rich Embed) notifications for tasks with past due dates.
+- **Sample URL Templates**: Easily configure webhook endpoints in **Settings > Tools > TODO++**:
+  - **Slack**: `https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK_URL`
+  - **Discord**: `https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK_URL`
+
+### 🏷️ Custom Tags (Key-Value Pairs)
 
 - **Default Priorities**: 🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low.
 - **Customizable**: Add your own priorities (e.g., "Critical", "Optional") in **Settings > Tools > TODO++**.
