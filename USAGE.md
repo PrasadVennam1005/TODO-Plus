@@ -92,6 +92,12 @@ Define your own priority levels and colors!
 2.  **Issue ID Pattern**: Regex to find IDs.
     *   Default: `[A-Z]+-\d+` (Matches `PROJ-123`).
 
+### ⚡ Large Project Scanning & Performance Limits
+1.  **Ignored Directories**: Add custom folder names (e.g. `dist`, `coverage`, `.venv`) to prevent scanning unwanted directories.
+2.  **Native Exclusions**: Folders excluded in your project settings or `.gitignore` are automatically skipped via IntelliJ's `ProjectFileIndex`.
+3.  **Max File Size Limit**: Set the maximum file size (default `5 MB`) to prevent scanning massive generated text or log files.
+4.  **Cross-Platform Normalization**: Handles Windows (`\`) and Unix (`/`) path formats seamlessly.
+
 ---
 
 ## 🔎 Tool Window Features
