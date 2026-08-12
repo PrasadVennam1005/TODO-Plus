@@ -2,6 +2,7 @@
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Version](https://img.shields.io/badge/version-2.3.0-blue)]()
+
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 Take your TODO comments to the next level! TODO++ adds powerful features to manage, organize, and track TODOs across your entire project.
