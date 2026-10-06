@@ -1,124 +1,175 @@
 # How to Use TODO++
 
-## 🚀 fast Start
-
-1.  **Open Todo List**: Click **TODO++** at the bottom of the IDE.
-2.  **Write a Todo**: In your code, type `// TODO: Fix this later`.
-3.  **Scan**: Click the **🔍 Scan** button in the tool window.
+Transform standard TODO comments into an intelligent, AI-augmented task management system directly inside JetBrains IDEs.
 
 ---
 
-## 📝 Syntax Guide
+## 🚀 Quick Start
 
-TODO++ parses comments in your code. You can add metadata inside parentheses `(...)` after the TODO keyword.
+1. **Open the Tool Window**: Click the **TODO++** tab at the bottom of your IDE (or `View > Tool Windows > TODO++`).
+2. **Write a TODO**: In any code file, type `// TODO: Fix this later`.
+3. **Live Auto-Scan**: TODO++ automatically indexes your comments as you type with sub-10ms incremental scanning.
+4. **Full Scan**: Click the **🔍 Scan Project** button in the tool window toolbar to refresh the entire solution.
 
-### Basic
+---
+
+## 📝 Syntax & Metadata Guide
+
+TODO++ parses comments in your code across 20+ programming languages. You can embed metadata inside parentheses `(...)` immediately after the TODO keyword.
+
+### 1. Basic Reminder
 ```kotlin
 // TODO: Simple reminder
+# FIXME: Fix before release
+/* NOTE: Remember to verify null check */
 ```
 
-### Priority, Assignee, Category
-Use these standard keys to organize your tasks:
+### 2. Priority, Assignee & Category
+Organize your tasks with standard tags:
 ```kotlin
-// TODO(priority:high): Critical bug fix
+// TODO(priority:critical): Fix production authentication crash
 // TODO(@john): Assigned to John
-// TODO(category:refactor): Code cleanup
+// TODO(category:refactor): Clean up legacy controller
 ```
-*   **Priorities**: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` (or custom defined).
-*   **Assignee**: Starts with `@`.
-*   **Category**: Any text.
+* **Priorities**: `CRITICAL` (🟣), `HIGH` (🔴), `MEDIUM` (🟠), `LOW` (🟢), or your own custom priority tags.
+* **Assignee**: Starts with `@` (e.g. `@alice`, `@team`).
+* **Category**: Any label (e.g. `refactor`, `bug`, `perf`, `security`).
 
-### 📅 Due Dates
-Set deadlines for your tasks. Overdue items will be highlighted in **RED**.
+### 3. 📅 Due Dates & Overdue Highlighting
+Set deadlines for your tasks. Overdue items are automatically highlighted in **bold red** with optional balloon alerts:
 ```kotlin
-// TODO(due:2025-03-20): Release deadline
-// TODO(due:today): Must finish today
-// TODO(due:tomorrow): Prepare for meeting
+// TODO(due:2026-10-15): Release milestone deadline
+// TODO(due:today): Must finish before end of sprint
+// TODO(due:tomorrow): Prepare for team sync
 ```
 
-### 🔗 Issue Linking
-Link TODOs to your external issue tracker (Jira, GitHub, etc.).
-
-**Option 1: Explicit Tag**
+### 4. 🔗 Issue Linking
+Link TODOs directly to external trackers (Jira, GitHub, YouTrack, etc.):
 ```kotlin
-// TODO(issue:PROJ-123): Fix validation logic
+// TODO(issue:PROJ-101): Refactor database query
+// TODO(issue:#42): Fix race condition in worker
 ```
+* **Auto-detection**: If configured, mentioning IDs in the description also links automatically (e.g. `// TODO: Resolve PROJ-101`).
+* **Jump to Tracker**: Double-click or right-click any linked task and select **Open in Issue Tracker** to open the ticket in your default browser.
 
-**Option 2: Auto-Detection**
-If configured, just mention the ID in the description:
-```kotlin
-// TODO: Fix validation logic (see PROJ-123)
-```
-*   **Action**: Right-click the TODO in the list and select **Open in Issue Tracker**.
-*   **Setup**: Go to **Settings > Tools > TODO++** to configure your URL template (e.g., `https://jira.com/browse/{id}`).
-
-### 🏷️ Custom Tags
-Add any custom key-value pair you need.
+### 5. 🏷️ Custom Tags & Key-Value Pairs
+Add arbitrary metadata tags:
 ```kotlin
 // TODO(risk:high estimate:4h): Complex refactoring
 // TODO(reviewer:@alice type:security): Security audit needed
 ```
 
-### ⚡ Power User Combos
-
-**Live Templates**
-Just type `todo+` and hit `Tab` or `Space` to instantly generate an enriched comment template!
-
-**Quick Fixes (Intention Actions)**
-Have a codebase full of old, basic TODOs? Just type `// TODO: fix this`, click on it, press **`Alt + Enter`** (or Option+Enter) and choose **"Upgrade to TODO++ format"**!
-
-**Full Format Example**
-Combine everything into a comprehensive task definition:
+### 6. ⚡ Power User Combos
+Combine all tags into a comprehensive task definition:
 ```kotlin
-// TODO(@me priority:high due:today issue:PROJ-101): Fix critical crash
+// TODO(@john priority:critical due:today issue:PROJ-101 category:bug): Fix memory leak in auth pool
 ```
+
+* **Live Template**: Type `todo+` and press `Tab` or `Space` to generate an enriched TODO template instantly.
+* **Quick Fix (Intention Action)**: Position the cursor on any basic `// TODO: fix this`, press **`Alt + Enter`** (or `Option + Enter`), and select **"Upgrade to TODO++ format"**.
 
 ---
 
-## ⚙️ Configuration
+## 🤖 AI-Powered Jira Ticket Assistant (New in v2.4.0)
+
+Stop unlinked and forgotten TODO comments from crossing sprints without Jira tickets!
+
+### How to Draft Jira Tickets with AI:
+1. In the **TODO++ tool window**, select any unlinked TODO task.
+2. Click the **🤖 Suggest Jira** button on the toolbar (or right-click -> **Draft Jira Ticket with AI**).
+3. TODO++ inspects the TODO comment and extracts surrounding code context ($\pm 15$ lines).
+4. The configured AI model analyzes the code and generates:
+   * **Structured Summary**: Concise, standardized title for Jira.
+   * **Issue Type**: Automatically classified (e.g., `Bug`, `Task`, `Story`, `Technical Debt`).
+   * **Description**: Detailed markdown breakdown including code snippet, context, and potential solution.
+   * **Acceptance Criteria**: Bulleted checklist of verifiable conditions.
+5. An interactive **Modal Preview Dialog** appears:
+   * Inspect and customize any fields.
+   * Toggle **"Update code comment in-place with assigned issue key"**.
+6. Click **Create in Jira**:
+   * Creates the issue via Jira REST API.
+   * Automatically updates your source code comment in-place (e.g., `// TODO(issue:PROJ-101): ...`).
+
+### Supported AI Providers:
+* **Google Gemini**: Gemini 1.5 Flash (default, fast) or Gemini 1.5 Pro.
+* **OpenAI**: GPT-4o, GPT-4o-mini.
+* **Anthropic Claude**: Claude 3.5 Sonnet.
+* **Ollama / Local LLMs**: Any OpenAI-compatible local endpoint (e.g., `http://localhost:11434/v1` with `llama3`, `mistral`, or `codellama`).
+
+---
+
+## 🛡️ VCS Pre-Commit Guard (New in v2.4.0)
+
+Never accidentally commit orphan TODO comments before a sprint cut!
+
+1. When you commit files through IntelliJ's Git commit dialog (`Cmd + K` / `Ctrl + K`), TODO++ automatically inspects staged files.
+2. If unlinked TODO comments (without an issue ticket) are detected, a warning modal appears:
+   * **"Review in TODO++"**: Opens the tool window so you can draft Jira tickets with AI before committing.
+   * **"Commit Anyway"**: Bypasses the check and proceeds with the commit.
+   * **"Cancel Commit"**: Aborts the commit to address TODOs.
+3. **Configuration**: Toggle on/off under **Settings > Tools > TODO++ > Enable Pre-Commit TODO Check**.
+
+---
+
+## 🌐 REST Exports & Team Webhooks
+
+### 1-Click Issue Tracker Exports:
+* **GitHub Issues**: Right-click any task -> **Export Task to GitHub Issue**. Automatically creates a formatted issue on your repository (`POST /repos/{owner}/{repo}/issues`).
+* **Jira Cloud**: Right-click any task -> **Export Task to Jira Issue**. Directly creates a ticket in your Jira project (`POST /rest/api/2/issue`).
+
+### Team Webhook Notifications:
+* Click the **📢 Slack / Discord** toolbar button to dispatch instant overdue task alerts formatted with Block Kit (Slack) or Rich Embeds (Discord).
+
+---
+
+## ⚙️ Configuration Guide
 
 Access settings via **Settings/Preferences > Tools > TODO++**.
 
-### Custom Priorities
-Define your own priority levels and colors!
-1.  Open Settings.
-2.  Click **+** to add a priority (e.g., "BLOCKER").
-3.  Choose a color (e.g., Purple).
-4.  Reorder items to define sort order.
+### 1. AI Assistant Settings
+* **AI Provider**: Choose `GEMINI`, `OPENAI`, `CLAUDE`, or `OLLAMA`.
+* **API Key**: Enter your API key (stored securely in IntelliJ's credential store).
+* **Model Name**: Specify the model identifier (e.g. `gemini-1.5-flash`, `gpt-4o-mini`, `claude-3-5-sonnet`).
+* **Local Endpoint URL**: For Ollama/local models (e.g. `http://localhost:11434/v1`).
+* **Pre-Commit Check**: Checkbox to enable or disable the VCS pre-commit warning guard.
 
-### Issue Tracker & REST Export Setup
-1.  **Issue URL Template**: Define where link tags `{id}` go.
-    *   GitHub Example: `https://github.com/my-org/my-repo/issues/{id}`
-    *   Jira Example: `https://mycompany.atlassian.net/browse/{id}`
-2.  **Issue ID Pattern**: Regex pattern matching IDs in code comments (e.g. `[A-Z]+-\d+|#\d+`).
-3.  **GitHub REST Integration**:
-    *   **Personal Access Token**: GitHub PAT token with `repo` scope.
-    *   **Repository Owner**: e.g., `my-org`
-    *   **Repository Name**: e.g., `my-repo`
-4.  **Jira Cloud REST Integration**:
-    *   **Jira Base URL**: `https://mycompany.atlassian.net`
-    *   **Account Email**: `user@company.com`
-    *   **API Token**: Atlassian API token.
-    *   **Project Key**: e.g., `PROJ`
-5.  **Slack / Discord Webhooks**:
-    *   **Slack Webhook URL**: `https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK_URL`
-    *   **Discord Webhook URL**: `https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK_URL`
+### 2. Issue Tracker Credentials
+* **GitHub Settings**:
+  * **Personal Access Token**: Classic PAT (with `repo` scope) or Fine-grained PAT (with `Issues: Read and write`).
+  * **Repository Owner & Name**: e.g., `vennamprasad` / `TODO-Plus`.
+* **Jira Cloud Settings**:
+  * **Base URL**: e.g. `https://mycompany.atlassian.net`
+  * **Account Email**: Your Atlassian account email.
+  * **API Token**: Atlassian API token.
+  * **Project Key**: Jira project key (e.g., `PROJ`).
 
-### ⚡ Large Project Scanning & Performance Limits
-1.  **Ignored Directories**: Add custom folder names (e.g. `dist`, `coverage`, `.venv`) to prevent scanning unwanted directories.
-2.  **Native Exclusions**: Folders excluded in your project settings or `.gitignore` are automatically skipped via IntelliJ's `ProjectFileIndex`.
-3.  **Max File Size Limit**: Set the maximum file size (default `5 MB`) to prevent scanning massive generated text or log files.
-4.  **High-Volume Tree Rendering**: Top-level group expansion and 200ms `Alarm` filter debouncing guarantee zero EDT freezes on 5,000+ TODO items.
-5.  **Cross-Platform Normalization**: Handles Windows (`\`) and Unix (`/`) path formats seamlessly.
+### 3. Custom Priorities & Colors
+* Click **+** to add custom priority labels (e.g. `BLOCKER`, `URGENT`).
+* Click the color box to customize color highlights in the tree and editor.
+* Reorder items to adjust sort urgency.
+
+### 4. Custom Keywords
+* Add custom comment markers (e.g. `HACK:`, `BUG:`, `NOTE:`, `OPTIMIZE:`, `PERF:`).
+* Choose custom emoji badge icons.
+
+### 5. Performance & Large Project Scanning
+* **Ignored Directories**: Add folder patterns to ignore (defaults include `build`, `node_modules`, `.next`, `dist`, `coverage`, `.venv`).
+* **Max File Size Limit**: Configurable cap (default 5 MB) prevents scanning huge generated binaries or minified bundles.
+* **Native Exclusions**: Automatically respects `.gitignore` and IDE-excluded directories via `ProjectFileIndex`.
 
 ---
 
 ## 🔎 Tool Window Features
 
-*   **Grouping**: Use the **Group By** dropdown to organize your TODOs hierarchically by File, Assignee, Priority, or Category.
-*   **Sorting**: Click any column header (Priority, Due Date, etc.) to sort within groups.
-*   **Filtering**:
-    *   Type `risk:high` in the search bar to see only high-risk items.
-    *   Type `@john` to see John's tasks.
-*   **Navigation**: Double-click any row to jump directly to that line of code.
-*   **Export**: Automatically export your customized and grouped list to CSV, Markdown, or a **Beautiful Interactive HTML Dashboard**.
+* **Hierarchy Grouping**: Use the **Group By** dropdown to view tasks grouped by:
+  * 📁 **File**
+  * 👤 **Assignee**
+  * 🎯 **Priority** (sorted by urgency: Critical → High → Medium → Low)
+  * 🏷️ **Category**
+* **Live Debounced Search**: Type in the search box to filter instantly by description, `@assignee`, or `category`.
+* **Multi-Select & Batch Actions**: Hold `Shift` or `Cmd/Ctrl` to select multiple tasks (or entire group headers) and click:
+  * **✅ Mark Completed**: Comments out or tags task as done.
+  * **↩️ Mark Incomplete**: Reverts task back to active state.
+* **Progress Bar & Status**: Real-time completion progress bar (e.g. `75% (9/12)`) in the status bar with high-contrast indicator.
+* **Copy for Standup**: 1-click button to format all visible tasks into clean markdown bullets ready to paste into Slack, Teams, or daily standup notes.
+* **Export Reports**: Export your tasks into **CSV**, **Markdown**, or an **Executive HTML Dashboard** with charts and statistics.
