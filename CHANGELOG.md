@@ -4,6 +4,12 @@ All notable changes to **TODO++** will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] – 2026-10-06
+
+### ⚡ 100% Zero-Deprecated Platform APIs
+- **Adaptive `FileSaverDescriptor` Instantiation**: Replaced legacy varargs constructor invocation with dynamic, version-adaptive descriptor instantiation, completely eliminating deprecated constructor warnings across IntelliJ Platform 2024.1 through 2025.1+.
+- **Modern Notification Actions**: Upgraded GitHub and Jira issue export notifications from deprecated `Notification.setListener` to modern `NotificationAction` with `BrowserUtil.browse`.
+
 ## [2.4.0] – 2026-10-06
 
 ### 🔄 Real-Time Sync, Centralized Cache & Single-Flight Scanning

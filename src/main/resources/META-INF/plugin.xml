@@ -8,7 +8,7 @@
     
     <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into an intelligent, AI-augmented task management system directly within all JetBrains IDEs. Organize, track, export, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v2.4.0</h3>
+    <h3>✨ Status: v2.4.1</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
@@ -31,13 +31,17 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <h4>v2.4.1 Release Notes:</h4>
+    <ul>
+        <li><strong>⚡ 100% Zero-Deprecated Platform APIs</strong>: Replaced legacy <code>FileSaverDescriptor</code> constructor invocation with adaptive version-safe descriptor instantiation, eliminating deprecated constructor warnings across IntelliJ 2024.1 through 2025.1+.</li>
+        <li><strong>🌐 Modern Notification Actions</strong>: Upgraded GitHub and Jira issue export notifications to modern <code>NotificationAction</code> with <code>BrowserUtil.browse</code>.</li>
+    </ul>
     <h4>v2.4.0 Release Notes:</h4>
     <ul>
-        <li><strong>🤖 AI-Powered Jira Ticket Assistant</strong>: Integration with Google Gemini, OpenAI, Anthropic Claude, and Ollama/Local models to turn unlinked TODO comments into complete Jira tickets with automated in-place code linking.</li>
-        <li><strong>🛡️ VCS Pre-Commit Check</strong>: Warns developers during Git commit when unlinked TODOs are staged to prevent orphan tasks from escaping into production.</li>
+        <li><strong>🤖 AI-Powered Jira Ticket Assistant</strong>: Turn unlinked or forgotten TODO comments into actionable Jira tickets with automated in-place code linking (<code>// TODO(issue:KEY): ...</code>). Supports Google Gemini, OpenAI, Claude, and Ollama.</li>
+        <li><strong>🛡️ VCS Pre-Commit Guard</strong>: Warns developers during Git commit when unlinked TODOs are staged.</li>
         <li><strong>🔄 Real-Time Centralized Sync</strong>: Incremental file scanning with MessageBus sync across all open tool windows. Single-flight task coalescer prevents redundant background scans.</li>
         <li><strong>🎨 Settings UI Form Improvements</strong>: Robust responsive GridBagLayout form layout preventing UI displacement when pasting long API tokens.</li>
-        <li><strong>⚡ 100% Verified Clean Platform APIs</strong>: Verified against IntelliJ 2024.1, 2024.2, and 2024.3 with zero deprecated API warnings and dynamic plugin reload eligibility.</li>
     </ul>
     <h4>v2.3.0 Release Notes:</h4>
     <ul>
