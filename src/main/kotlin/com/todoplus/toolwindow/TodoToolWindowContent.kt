@@ -993,8 +993,10 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                     result.onSuccess { url ->
                         NotificationGroupManager.getInstance()
                             .getNotificationGroup("TODO++ Notifications")
-                            .createNotification("Exported to GitHub Issue: <a href='$url'>$url</a>", NotificationType.INFORMATION)
-                            .setListener(com.intellij.notification.NotificationListener.URL_OPENING_LISTENER)
+                            .createNotification("Exported to GitHub Issue successfully.", NotificationType.INFORMATION)
+                            .addAction(com.intellij.notification.NotificationAction.createSimpleExpiring("Open in Browser") {
+                                com.intellij.ide.BrowserUtil.browse(url)
+                            })
                             .notify(project)
                     }.onFailure { ex ->
                         NotificationGroupManager.getInstance()
@@ -1037,8 +1039,10 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                     result.onSuccess { url ->
                         NotificationGroupManager.getInstance()
                             .getNotificationGroup("TODO++ Notifications")
-                            .createNotification("Exported to Jira Issue: <a href='$url'>$url</a>", NotificationType.INFORMATION)
-                            .setListener(com.intellij.notification.NotificationListener.URL_OPENING_LISTENER)
+                            .createNotification("Exported to Jira Issue successfully.", NotificationType.INFORMATION)
+                            .addAction(com.intellij.notification.NotificationAction.createSimpleExpiring("Open in Browser") {
+                                com.intellij.ide.BrowserUtil.browse(url)
+                            })
                             .notify(project)
                     }.onFailure { ex ->
                         NotificationGroupManager.getInstance()
