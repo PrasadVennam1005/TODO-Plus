@@ -36,9 +36,21 @@ The only data stored by TODO++ is:
 
 All data is stored locally in your IDE's configuration directory and is never transmitted anywhere.
 
-## Third-Party Services
+## Third-Party Services & User-Initiated Integrations
 
-TODO++ does not integrate with or communicate with any third-party services or APIs.
+TODO++ does NOT operate any backend servers and does NOT transmit telemetry or background data.
+
+All network communication is strictly **user-initiated and opt-in**:
+
+1. **AI Jira Ticket Assistant (Optional)**:
+   - When you explicitly click "Draft Jira Ticket with AI", the selected TODO comment and surrounding code context (&plusmn;15 lines) are sent directly from your IDE to your configured AI provider (Google Gemini, OpenAI, Anthropic Claude, or local Ollama).
+   - Your API keys and tokens are stored securely in your local IDE configuration/credential store and are never transmitted to us or any unauthorized third party.
+2. **Issue Tracker Export (Optional)**:
+   - When you explicitly choose to export a task to GitHub Issues or Jira Cloud, the task details are sent directly to the specified repository or Jira Cloud tenant via standard REST APIs using your provided personal access token.
+3. **Webhook Notifications (Optional)**:
+   - When you trigger Slack or Discord alerts, overdue summary payloads are sent directly to your configured incoming webhook URL.
+
+No data ever passes through any TODO++ intermediary servers. All requests go directly between your local machine and your chosen service endpoints.
 
 ## Children's Privacy
 
