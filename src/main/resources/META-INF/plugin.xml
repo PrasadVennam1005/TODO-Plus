@@ -6,57 +6,53 @@
     <description><![CDATA[
     <h2>Turbocharge Your TODOs with TODO++</h2>
     
-    <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into a powerful task management system directly within IntelliJ IDEA. Organize, track, and complete tasks without leaving your code.</p>
+    <p><strong>TODO++</strong> (Todo Plus) transforms standard TODO comments into an intelligent, AI-augmented task management system directly within all JetBrains IDEs. Organize, track, export, and complete tasks without leaving your code.</p>
     
-    <h3>✨ Status: v2.1.0</h3>
+    <h3>✨ Status: v2.4.0</h3>
     
     <h3>🔥 Key Features:</h3>
     <ul>
-        <li><strong>Multi-Selection & Batch Completion</strong>: Select multiple TODO items or whole group headers and toggle completion in batch!</li>
-        <li><strong>Live Auto-Scan on Typing</strong>: Real-time debounced updates as you type in the editor.</li>
-        <li><strong>Quick Fixes (Alt + Enter)</strong>: Instantly mark TODOs as completed or incomplete directly from your code editor.</li>
-        <li><strong>Progress Bar & Completion Stats</strong>: Live progress bar and completion ratio readout in the status bar with high-contrast rendering.</li>
-        <li><strong>Copy for Standup</strong>: 1-click export of selected/visible TODOs to Slack/Markdown format for daily standups.</li>
-        <li><strong>Multi-Line TODO Support</strong>: Seamlessly extracts indented bullet points and continuation lines under TODO comments.</li>
-        <li><strong>Custom Keyword Recognition</strong>: Parses <code>HACK:</code>, <code>BUG:</code>, <code>NOTE:</code>, <code>OPTIMIZE:</code> in addition to standard <code>TODO</code>/<code>FIXME</code>.</li>
-        <li><strong>Interactive Audio Feedback</strong>: Crisp completion chimes on task completion and pop sounds on reverting.</li>
-        <li><strong>Executive PDF & HTML Reports</strong>: Export formatted, printable PDF reports with priority breakdown charts.</li>
-        <li><strong>Entire Solution & CSHTML / Rider Support</strong>: Added <code>Entire Solution / Project</code> scope and full support for <code>.cshtml</code>, <code>.razor</code>, <code>.vue</code>, <code>.svelte</code>, <code>.dart</code>, and all JetBrains IDEs.</li>
-        <li><strong>Custom Priority Badges</strong>: Visual priority badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) rendered in the tree view.</li>
-        <li><strong>Smart Due Date Notifications</strong>: Automatically reminds you via native IDE balloon popups about any TODOs that are overdue or due today!</li>
+        <li><strong>🤖 AI-Powered Jira Ticket Assistant</strong>: Analyze unlinked/forgotten TODO comments with surrounding code context (&plusmn;15 lines) using Google Gemini, OpenAI, Claude, or Ollama. Review, draft, and create Jira tickets with 1-click in-place code linking (<code>// TODO(issue:KEY): ...</code>).</li>
+        <li><strong>🛡️ VCS Pre-Commit Guard</strong>: Automatically detects unlinked TODO comments in staged Git files and alerts you before committing, preventing forgotten tasks from crossing sprints.</li>
+        <li><strong>🔄 Real-Time Centralized Cache & Single-Flight Scan</strong>: Sub-10ms incremental rescanning during editor typing. Coalesced background tasks eliminate redundant scans and multiple progress bars.</li>
+        <li><strong>🌐 REST Integration (GitHub & Jira)</strong>: Direct 1-click export of any TODO comment to GitHub Issues or Jira Cloud with formatted markdown details.</li>
+        <li><strong>🔔 Slack & Discord Webhooks</strong>: Dispatch instant overdue task alerts directly into team communication channels via webhooks.</li>
+        <li><strong>Multi-Selection & Batch Completion</strong>: Select multiple TODO items or group headers and toggle completion in batch!</li>
+        <li><strong>Executive PDF & HTML Reports</strong>: Export formatted, printable reports with priority breakdown charts.</li>
+        <li><strong>Entire Solution & Cross-IDE Support</strong>: Compatible with IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, GoLand, CLion, Rider, Android Studio, and RustRover.</li>
+        <li><strong>Zero Deprecated APIs & Dynamic Reload</strong>: 100% compliant with IntelliJ Platform 2024.1+; install and update without restarting your IDE.</li>
     </ul>
 
     <h3>📝 Usage Examples:</h3>
     <pre><code>// TODO(@john priority:critical due:today): Fix production crash
-// HACK(@alice priority:high): Workaround for layout glitch
-# BUG(issue:PROJ-456): Refactor database schema (Python support!)</code></pre>
-    
-    <p><em>Installation Note: Please restart the IDE after installation to ensure all features load correctly.</em></p>
+// TODO(issue:PROJ-101): Refactor authentication handler
+# BUG(issue:#42 priority:high): Fix memory leak in background worker
+// HACK(@alice priority:medium): Temporary workaround for layout issue</code></pre>
     ]]></description>
 
     <change-notes><![CDATA[
+    <h4>v2.4.0 Release Notes:</h4>
+    <ul>
+        <li><strong>🤖 AI-Powered Jira Ticket Assistant</strong>: Integration with Google Gemini, OpenAI, Anthropic Claude, and Ollama/Local models to turn unlinked TODO comments into complete Jira tickets with automated in-place code linking.</li>
+        <li><strong>🛡️ VCS Pre-Commit Check</strong>: Warns developers during Git commit when unlinked TODOs are staged to prevent orphan tasks from escaping into production.</li>
+        <li><strong>🔄 Real-Time Centralized Sync</strong>: Incremental file scanning with MessageBus sync across all open tool windows. Single-flight task coalescer prevents redundant background scans.</li>
+        <li><strong>🎨 Settings UI Form Improvements</strong>: Robust responsive GridBagLayout form layout preventing UI displacement when pasting long API tokens.</li>
+        <li><strong>⚡ 100% Verified Clean Platform APIs</strong>: Verified against IntelliJ 2024.1, 2024.2, and 2024.3 with zero deprecated API warnings and dynamic plugin reload eligibility.</li>
+    </ul>
+    <h4>v2.3.0 Release Notes:</h4>
+    <ul>
+        <li><strong>GitHub Issues REST Export</strong>: 1-click export of any TODO directly to GitHub Issues via REST API.</li>
+        <li><strong>Jira Cloud REST Export</strong>: Export tasks directly into Jira Cloud projects.</li>
+        <li><strong>Slack & Discord Webhook Alerts</strong>: Send overdue task summaries directly to Slack channels and Discord servers.</li>
+        <li><strong>Performance at Scale</strong>: Optimized virtualized tree expansion and 200ms debounce for 5,000+ items.</li>
+    </ul>
     <h4>v2.1.0 Release Notes:</h4>
     <ul>
-        <li><strong>Block Comment TODO Detection</strong>: TODOs inside <code>/* TODO: ... */</code> and mid-line <code>if (x /* TODO: ... */) {</code> are now correctly detected across all supported languages.</li>
-        <li><strong>Javadoc / KDoc Support</strong>: <code>/** TODO: ... */</code> style comments are now scanned.</li>
-        <li><strong>Customisable HTML Export</strong>: Override the page title, CSS styles (including criticality colours), stats counters block, list/table section, and add a custom footer — all from Settings.</li>
-        <li><strong>Priority Group Sorting</strong>: When grouped by Priority, tree nodes now sort by urgency (Critical → High → Medium → Low) instead of alphabetically.</li>
-        <li><strong>Large File Safety Guard</strong>: Files over 5MB are automatically skipped to prevent out-of-memory errors on large generated assets.</li>
-    </ul>
-    <h4>v2.0.0 Major Milestone Release Notes:</h4>
-    <ul>
-        <li><strong>Multi-Selection & Batch Actions</strong>: Select multiple TODOs or group headers and click <code>Mark Completed</code> or <code>Mark Incomplete</code>.</li>
-        <li><strong>Live Auto-Scan</strong>: Real-time background scanning while typing in any editor buffer.</li>
-        <li><strong>Quick Fixes (Alt + Enter)</strong>: Added <code>Mark TODO as Completed</code> and <code>Mark DONE as Incomplete</code> editor intentions.</li>
-        <li><strong>Visual Progress Bar</strong>: High-contrast completion progress bar (e.g. <code>66% (8/12)</code>) in the status footer.</li>
-        <li><strong>Copy for Standup</strong>: 1-click button to format and copy tasks to clipboard for Slack/Teams daily standups.</li>
-        <li><strong>Multi-Line TODO Comments</strong>: Supports indented bullet points and multi-line task descriptions.</li>
-        <li><strong>Custom Keyword Parsing</strong>: Supports <code>HACK</code>, <code>BUG</code>, <code>NOTE</code>, <code>OPTIMIZE</code> keywords.</li>
-        <li><strong>Interactive Audio FX</strong>: Audio sound feedback chimes on task state toggles.</li>
-        <li><strong>Executive PDF Reports</strong>: 1-click PDF task report generation with browser preview.</li>
-        <li><strong>Enhanced Scope & Rider / CSHTML Support</strong>: Added <code>Entire Solution / Project</code> scope and full support for <code>.cshtml</code>, <code>.razor</code>, <code>.vue</code>, <code>.svelte</code>, <code>.dart</code>, and all non-binary text files.</li>
-        <li><strong>Priority Badges</strong>: Colored badges (🟣 Critical, 🔴 High, 🟠 Medium, 🟢 Low) rendered in the tree view.</li>
-        <li><strong>100% Deprecated API Free</strong>: Verified against IntelliJ 2024.1+ APIs with zero warnings.</li>
+        <li><strong>Block Comment TODO Detection</strong>: TODOs inside <code>/* TODO: ... */</code> and mid-line comments detected across all languages.</li>
+        <li><strong>Javadoc / KDoc Support</strong>: <code>/** TODO: ... */</code> style comments scanned.</li>
+        <li><strong>Customisable HTML Export</strong>: Override styling, stats, list/table sections, and footer from Settings.</li>
+        <li><strong>Priority Urgency Ordering</strong>: Tree groups ordered by urgency (Critical → High → Medium → Low).</li>
+        <li><strong>Large File Safety Guard</strong>: Files over 5MB skipped to prevent memory pressure.</li>
     </ul>
     ]]></change-notes>
     
