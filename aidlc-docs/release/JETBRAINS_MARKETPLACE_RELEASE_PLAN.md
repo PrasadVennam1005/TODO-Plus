@@ -40,7 +40,7 @@ This is the fastest method and requires no additional CI/CD secret setup.
    * Navigate to [JetBrains Marketplace Vendor Portal](https://plugins.jetbrains.com/).
    * Click **Sign In** with your JetBrains account (the account registered as the vendor of `com.todoplus`).
 2. **Access Your Plugin**:
-   * Go to **Upload Update** or open your plugin management page: [TODO++ on JetBrains Marketplace](https://plugins.jetbrains.com/plugin/com.todoplus).
+   * Go to **Upload Update** or open your plugin management page: [TODO++ on JetBrains Marketplace (ID 30223)](https://plugins.jetbrains.com/plugin/30223-todo-).
 3. **Upload Distributable Archive**:
    * Click **Upload New Update** (or **Upload Plugin**).
    * Drag & drop the built ZIP file:
