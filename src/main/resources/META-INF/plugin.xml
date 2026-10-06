@@ -109,7 +109,11 @@
         
         <!-- Startup Activity -->
         <postStartupActivity implementation="com.todoplus.services.TodoNotificationActivity"/>
+
+        <!-- VCS Pre-Commit Hook -->
+        <checkinHandlerFactory implementation="com.todoplus.vcs.TodoCheckinHandlerFactory"/>
     </extensions>
+
 
     
     <actions>

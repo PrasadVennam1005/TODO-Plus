@@ -1,8 +1,8 @@
 # AI-DLC Phase 3: Verification & Test Execution Report
 
 **Project**: TODO++  
-**Release**: 2.3.0  
-**Date**: 2026-08-13  
+**Release**: 2.4.0  
+**Date**: 2026-10-06  
 **Result**: PASSED (100% SUCCESS)  
 
 ---
@@ -12,15 +12,23 @@
 ### 1. Unit Test Suite (`./gradlew test`)
 
 ```text
+> Task :compileKotlin UP-TO-DATE
 > Task :compileTestKotlin
-> Task :testClasses
+> Task :testClasses UP-TO-DATE
+> Task :instrumentTestCode
 > Task :test
 
-BUILD SUCCESSFUL in 5s
+BUILD SUCCESSFUL in 3s
 16 actionable tasks: 5 executed, 11 up-to-date
 ```
 
 #### Executed Test Classes:
+- **`com.todoplus.services.TodoCacheAndSyncTest`**: **PASSED**
+  - Verified initial project scan cache population and flattening.
+  - Verified incremental single-file update replacing file items without disturbing other cached files.
+  - Verified file deletion removes entry from cache.
+  - Verified clearing cache when all TODOs are removed from an edited file.
+  - Verified single-flight scan coalescing simulation preventing duplicate concurrent background tasks.
 - **`com.todoplus.services.TodoScannerFakeTest`**: **PASSED**
   - Verified path filtering for Unix `/` slashes.
   - Verified path filtering for Windows `\` slashes.
@@ -34,6 +42,15 @@ BUILD SUCCESSFUL in 5s
   - Verified Jira Cloud Issue Export credential validation.
   - Verified Slack Webhook Block Kit payload dispatch & empty list handling.
   - Verified Discord Webhook Embed payload dispatch & empty list handling.
+- **`com.todoplus.services.ai.AiTicketSuggestionTest`**: **PASSED**
+  - Verified structured prompt generation including surrounding code context and file coordinates.
+  - Verified JSON response parsing for clean JSON as well as Markdown code block wrapped responses.
+  - Verified in-place comment injection across multiple comment syntax formats (parenthesized, colon-delimited, bare TODO, hash comments).
+  - Verified VCS pre-commit unlinked TODO detection filtering.
+- **`com.todoplus.ui.tree.TodoTreeModelBuilderTest`**: **PASSED**
+- **`com.todoplus.parser.TodoParserTest`**: **PASSED**
+- **Total Test Count**: 52 passed, 0 failed, 0 skipped.
+
 
 ---
 

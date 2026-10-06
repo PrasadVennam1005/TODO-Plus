@@ -1,20 +1,20 @@
 # TODO++ - Enhanced TODO Management for IntelliJ IDEA
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Version](https://img.shields.io/badge/version-2.3.0-blue)]()
+[![Version](https://img.shields.io/badge/version-2.4.0-blue)]()
 
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 Take your TODO comments to the next level! TODO++ adds powerful features to manage, organize, and track TODOs across your entire project.
 
-## 🚀 What's New in v2.3.0
+## 🚀 What's New in v2.4.0
 
-- 🐱 **GitHub Issues REST Export**: Export any TODO task directly as a new GitHub repository issue (`POST /repos/{owner}/{repo}/issues`) via right-click context menu or toolbar.
-- 🔷 **Jira Cloud REST Export**: Export any TODO task directly to Jira Cloud (`POST /rest/api/3/issue`) with formatted markdown descriptions and project field mapping.
-- 💬 **Slack & Discord Overdue Webhooks**: 1-click dispatch of formatted Overdue TODO alert notifications directly to Slack (Block Kit) or Discord (Embed) webhook endpoints.
-- ⚡ **5,000+ Item Rendering Optimization**: Smart top-level group expansion and 200ms `Alarm` live filter debouncing prevent UI thread freezing on massive codebases.
-- ⚙️ **Integrations & Webhooks Settings**: New credentials and sample URL template configuration in **Settings > Tools > TODO++**.
-- 🚀 **Automated JetBrains Marketplace CI/CD**: Fully automated Gradle publishing workflow for [JetBrains Marketplace](https://plugins.jetbrains.com/).
+- 🤖 **AI-Powered Jira Ticket Assistant**: Right-click any unlinked TODO or click the toolbar to draft structured Jira tickets with Google Gemini, OpenAI, Claude, or local Ollama.
+- 🔗 **1-Click Create & In-Place Code Linking**: Automatically creates the Jira Cloud issue and injects `// TODO(issue:KEY): ...` directly into your source code.
+- 🛡️ **VCS Pre-Commit Guard (`CheckinHandlerFactory`)**: Warns during Git commit if unlinked/forgotten TODOs are detected in staged files, preventing orphan comments across sprints.
+- 🔄 **Real-Time Centralized Cache & Sync**: In-memory `ConcurrentHashMap` cache with IntelliJ `MessageBus` synchronization across multiple tool windows and sub-10ms incremental file updates.
+- ⚡ **Single-Flight Scan Coalescing**: Eliminates duplicate progress windows and background task churn during rapid re-scans.
+- 🐱 **GitHub & Jira REST Exporters**: Export tasks directly to GitHub Issues or Jira Cloud (`/rest/api/2/issue`) with formatted markdown descriptions and live links.
 
 ## ✨ Features
 

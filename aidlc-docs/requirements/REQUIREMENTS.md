@@ -45,6 +45,17 @@ TODO++ is an enhanced TODO management plugin for IntelliJ-based IDEs (IntelliJ I
 - **FR-19 (Issue REST Export)**: Export selected TODO tasks directly as new issues to GitHub (`POST /repos/{owner}/{repo}/issues`) or Jira (`POST /rest/api/3/issue`) via authenticated REST APIs.
 - **FR-20 (Webhook Alerts)**: Send formatted Overdue TODO alert notifications directly to Slack or Discord webhook endpoints.
 
+### 7. Centralized Cache, Incremental Scanning & Multi-Window Sync
+- **FR-21 (Centralized Project Cache)**: Maintain an in-memory, thread-safe cache (`ConcurrentHashMap<String, List<TodoItem>>`) of TODO items indexed by file path inside `TodoScannerService` as the single source of truth.
+- **FR-22 (Incremental File Scanning)**: On document typing or file modifications, perform an incremental scan only for the affected `VirtualFile` (< 10ms) and update the cache without triggering full project re-scans.
+- **FR-23 (Single-Flight Background Scan Coalescing)**: Enforce a single active background scan at any time. When a new scan is triggered, either cancel the active scan or coalesce pending requests, preventing duplicate "Scanning for TODOs" background tasks and progress windows.
+- **FR-24 (Multi-Window MessageBus Sync)**: Broadcast cache updates across all tool window contents via IntelliJ `MessageBus` topic (`TodoChangeListener.TOPIC`) to maintain 100% synchronization across split editors and windows.
+### 8. AI-Powered Jira Ticket Assistant
+- **FR-26 (AI Context Extraction & Ticket Suggestion)**: Extract TODO comment context (surrounding class/function lines, file path, author) and prompt configured LLMs to generate a structured Jira ticket proposal (Summary, Description with acceptance criteria, Issue Type, Priority).
+- **FR-27 (Multi-Provider AI Client)**: Support user-selected AI backends (Gemini, OpenAI, Anthropic Claude, and Ollama/Custom OpenAI-compatible endpoint) configured with API Key, Model, and Endpoint URL in `TodoSettingsService`.
+- **FR-28 (Interactive Review & In-Place Code Update)**: Present an interactive dialog (`AiJiraTicketDialog`) permitting users to review and edit AI suggestions before 1-click creation in Jira Cloud. Upon issue creation, automatically update the source code comment in-place (e.g. `// TODO(issue:PROJ-101): ...`).
+- **FR-29 (Pre-Commit Checkin Handler)**: Provide a Git commit hook (`CheckinHandlerFactory`) that detects unlinked/orphaned TODOs in staged changes and prompts the user to draft Jira tickets before committing.
+
 ---
 
 ## ⚙️ Non-Functional Requirements
@@ -54,3 +65,6 @@ TODO++ is an enhanced TODO management plugin for IntelliJ-based IDEs (IntelliJ I
 - **NFR-03 (Thread Safety)**: Zero synchronous lock contention or EDT blocking. All PSI/VFS access wrapped in `runReadAction`.
 - **NFR-04 (Cross-Platform)**: Path separator handling must work seamlessly across macOS, Linux, and Windows (`\` vs `/`).
 - **NFR-05 (Rendering Scalability)**: Tree Table rendering and filtering must complete in under 50ms on datasets of 5,000+ items without locking the Event Dispatch Thread (EDT).
+- **NFR-06 (Scan Concurrency & Latency)**: Incremental updates must process within 10ms on background thread without invoking background task dialogs; full scans must never produce multiple concurrent progress windows.
+- **NFR-07 (AI API Reliability & Timeout)**: AI network calls must run asynchronously on background threads with configurable timeouts (default 15s) and clear user error handling without blocking the IDE.
+

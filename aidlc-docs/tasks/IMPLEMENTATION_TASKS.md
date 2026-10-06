@@ -30,3 +30,19 @@
 | **TSK-18** | UI Integration | Add "Export to GitHub / Jira Issue" & "Send Overdue Webhook Alerts" actions to tool window & context menus | ✅ COMPLETED | Sandbox IDE |
 | **TSK-19** | Settings Configuration UI | Add GitHub/Jira credentials and Slack/Discord webhook fields to `TodoSettingsConfigurable` | ✅ COMPLETED | Sandbox IDE |
 | **TSK-20** | Verification & Docs | Add unit test suite, update `CHANGELOG.md`, `README.md`, `USAGE.md`, `VERIFICATION_REPORT.md` | ✅ COMPLETED | `./gradlew test` |
+| **TSK-21** | `TodoChangeListener` | Create IntelliJ MessageBus Topic for broadcasting project TODO cache updates | ✅ COMPLETED | Unit Tests |
+| **TSK-22** | `TodoScannerService` | Implement thread-safe cache (`ConcurrentHashMap`), incremental update/delete methods, and single-flight scan coalescing | ✅ COMPLETED | Unit Tests |
+| **TSK-23** | `TodoToolWindowContent` | Subscribe to `TodoChangeListener.TOPIC` and wire full scan trigger to single-flight coalescer | ✅ COMPLETED | Sandbox IDE |
+| **TSK-24** | `TodoToolWindowContent` | Replace full-project auto-refresh on keystrokes with debounced incremental file updates guarded by `ProjectFileIndex.isInContent` | ✅ COMPLETED | Sandbox IDE |
+| **TSK-25** | Unit Testing | Add test suite verifying centralized cache, incremental update/removal, and path filtering | ✅ COMPLETED | `TodoCacheAndSyncTest.kt` |
+| **TSK-26** | Verification & Docs | Execute `./gradlew test`, package plugin, and update verification report and documentation | ✅ COMPLETED | `./gradlew buildPlugin` |
+| **TSK-27** | State Persistence | Add AI Assistant configuration fields to `TodoSettingsService` and `TodoSettingsConfigurable` | ✅ COMPLETED | `TodoSettingsTest.kt` |
+| **TSK-28** | `IssueExporterService` | Extend `createJiraIssue` to accept customSummary, customDescription, and customIssueType | ✅ COMPLETED | Unit Tests |
+| **TSK-29** | `AiTicketSuggestionService` | Implement LLM integration for Gemini, OpenAI, Claude, and Ollama/Custom endpoints | ✅ COMPLETED | `AiTicketSuggestionTest.kt` |
+| **TSK-30** | `AiJiraTicketDialog` | Build interactive modal preview dialog with 1-click Jira export and in-place code comment injection | ✅ COMPLETED | `AiTicketSuggestionTest.kt` |
+| **TSK-31** | UI Actions | Add "Suggest Jira Ticket with AI" to tool window toolbar, context menus, and editor intentions | ✅ COMPLETED | Sandbox IDE |
+| **TSK-32** | VCS Pre-Commit Hook | Implement `TodoCheckinHandlerFactory` to warn on unlinked TODOs and offer AI ticket generation | ✅ COMPLETED | `AiTicketSuggestionTest.kt` |
+| **TSK-33** | Unit Testing | Add test suite verifying AI prompt builder, response JSON parsing, and comment injection | ✅ COMPLETED | `./gradlew test` (52 passed) |
+| **TSK-34** | Verification & Docs | Run `./gradlew test buildPlugin` and update documentation (`CHANGELOG.md`, `README.md`) | ✅ COMPLETED | `./gradlew buildPlugin` |
+
+

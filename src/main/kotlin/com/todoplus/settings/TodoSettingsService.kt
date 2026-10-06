@@ -88,7 +88,15 @@ class TodoSettingsService : PersistentStateComponent<TodoSettingsService.State> 
         // Webhook Integration
         var slackWebhookUrl: String = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK_URL"
         var discordWebhookUrl: String = "https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK_URL"
+
+        // AI Jira Ticket Assistant Settings
+        var aiProvider: String = "GEMINI"
+        var aiApiKey: String = ""
+        var aiModelName: String = "gemini-1.5-flash"
+        var aiCustomEndpoint: String = "http://localhost:11434/v1"
+        var enablePreCommitTodoCheck: Boolean = true
     }
+
 
     private var myState = State()
 

@@ -10,13 +10,18 @@
 
 ```mermaid
 graph TD
-    UI[TodoToolWindowContent UI] --> |Triggers Background Scan| Task[Task.Backgroundable]
-    Task --> |Queries Files| Scanner[TodoScannerService]
-    Scanner --> |Index Lookup| VFS[FileTypeIndex & GlobalSearchScope]
-    Scanner --> |Exclusion Check| PFI[ProjectFileIndex]
-    Scanner --> |Parse Lines| Parser[TodoParser]
-    Scanner --> |Fetch Blame| VCS[TodoVcsService]
-    Scanner --> |Save Settings| Settings[TodoSettingsService]
+    UI[TodoToolWindowContent UI 1..N] --> |Request Coalesced Scan| Scanner[TodoScannerService]
+    UI --> |Live Typing / Save| IncScan[Incremental File Scanner]
+    IncScan --> |Update Single File Cache| Cache[(Project Todo Cache)]
+    Scanner --> |Single-Flight Task.Backgroundable| Worker[Background Scanning Worker]
+    Worker --> |Index Lookup| VFS[FileTypeIndex & GlobalSearchScope]
+    Worker --> |Exclusion Check| PFI[ProjectFileIndex]
+    Worker --> |Parse Lines| Parser[TodoParser]
+    Worker --> |Fetch Blame| VCS[TodoVcsService]
+    Worker --> |Populate Full Cache| Cache
+    Cache --> |Broadcast on MessageBus| Bus[TodoChangeListener.TOPIC]
+    Bus --> |Synchronize on EDT| UI
+    Scanner --> |Read Settings| Settings[TodoSettingsService]
 ```
 
 ---
@@ -26,6 +31,10 @@ graph TD
 ### 1. TodoScannerService (`com.todoplus.services.TodoScannerService`)
 - **Scope**: Project-level service (`@Service(Service.Level.PROJECT)`).
 - **Responsibilities**:
+  - Acts as the central source of truth storing parsed `TodoItem` instances in a thread-safe `ConcurrentHashMap<String, List<TodoItem>>`.
+  - Coordinates single-flight full project background scans, cancelling obsolete scans and coalescing queued requests to guarantee at most ONE "Scanning for TODOs" background progress window exists.
+  - Implements lightweight incremental scanning (`updateFileCache(file)`, `removeFileFromCache(filePath)`) executing in < 10ms for single file edits.
+  - Broadcasts cache change notifications via IntelliJ `MessageBus` topic `TodoChangeListener.TOPIC`.
   - Locates candidate files via `FileTypeIndex.getFiles(fileType, scope)`.
   - Filters out files excluded by `ProjectFileIndex.isExcluded(file)` or user `ignoredDirectories`.
   - Enforces `maxFileSizeMb` checks to prevent out-of-memory crashes.
@@ -41,7 +50,8 @@ graph TD
 - **Scope**: Tool Window Content UI Panel (`SimpleToolWindowPanel`, `TreeTable`).
 - **Responsibilities**:
   - Manages action toolbars, scope selection, filter fields, priority dropdowns, and status labels.
-  - Dispatches background scanning tasks via `ProgressManager.getInstance().run(Task.Backgroundable)`.
+  - Subscribes to `TodoChangeListener.TOPIC` to instantly reflect cache modifications across all open windows without running duplicate full scans.
+  - Triggers debounced incremental scans on editor document changes only for files within project content (`ProjectFileIndex.isInContent(file)`).
 
 ### 4. TodoVcsService (`com.todoplus.services.vcs.TodoVcsService`)
 - **Scope**: Version Control Blame Service.
@@ -60,7 +70,27 @@ graph TD
   - Formats overdue tasks into Slack Block Kit and Discord Rich Embed JSON payloads.
   - Dispatches non-blocking POST requests to configured webhook endpoints.
 
+### 7. AiTicketSuggestionService (`com.todoplus.services.ai.AiTicketSuggestionService`)
+- **Scope**: AI Engine Service (`@Service`).
+- **Responsibilities**:
+  - Extracts code snippet context around candidate TODO comments.
+  - Dispatches structured prompts to selected LLM providers (Gemini, OpenAI, Anthropic Claude, Ollama/Custom).
+  - Parses JSON suggestions containing Summary, Description (Acceptance Criteria), Issue Type, and Priority.
+
+### 8. AiJiraTicketDialog (`com.todoplus.ui.dialogs.AiJiraTicketDialog`)
+- **Scope**: Modal UI Review Dialog (`DialogWrapper`).
+- **Responsibilities**:
+  - Renders AI-drafted Jira ticket fields with editable text areas.
+  - Triggers Jira issue creation via `IssueExporterService` and updates source code in-place with `issue:KEY`.
+
+### 9. TodoCheckinHandlerFactory (`com.todoplus.vcs.TodoCheckinHandlerFactory`)
+- **Scope**: VCS Commit Hook Extension (`checkinHandlerFactory`).
+- **Responsibilities**:
+  - Inspects staged files prior to commit for new unlinked TODO items (`issueId == null`).
+  - Alerts the user and provides a 1-click option to draft Jira tickets before pushing commits across sprints.
+
 ---
+
 
 ## 🔐 Threading & Concurrency Constraints
 

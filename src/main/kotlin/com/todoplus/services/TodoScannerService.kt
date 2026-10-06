@@ -27,9 +27,105 @@ class TodoScannerService(private val project: Project) {
         private val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(TodoScannerService::class.java)
     }
 
+    // Thread-safe in-memory cache of TODO items indexed by VirtualFile path
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, List<TodoItem>>()
+    private val isCacheInitialized = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    // Single-flight scan coordination state
+    @Volatile private var activeIndicator: ProgressIndicator? = null
+    private val isScanRunning = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val pendingRescan = java.util.concurrent.atomic.AtomicBoolean(false)
+
     private fun createParser(): TodoParser {
         val settings = com.todoplus.settings.TodoSettingsService.getInstance()
         return TodoParser(settings.getState().issuePattern)
+    }
+
+    /**
+     * Returns flattened list of all currently cached TODOs.
+     */
+    fun getCachedTodos(): List<TodoItem> = cache.values.flatten()
+
+    /**
+     * Checks if the cache has been populated by at least one scan.
+     */
+    fun isCacheInitialized(): Boolean = isCacheInitialized.get()
+
+    /**
+     * Clears internal cache.
+     */
+    fun clearCache() {
+        cache.clear()
+        isCacheInitialized.set(false)
+    }
+
+    /**
+     * Incrementally scans a single file, updates cache entry, and notifies listeners.
+     */
+    fun updateFileCache(file: VirtualFile): List<TodoItem> {
+        val fileTodos = scanFile(file)
+        if (fileTodos.isNotEmpty()) {
+            cache[file.path] = fileTodos
+        } else {
+            cache.remove(file.path)
+        }
+        val allTodos = getCachedTodos()
+        try {
+            project.messageBus.syncPublisher(TodoChangeListener.TOPIC).onTodosUpdated(allTodos)
+        } catch (e: Exception) {
+            LOG.warn("Could not publish TodoChangeListener event", e)
+        }
+        return allTodos
+    }
+
+    /**
+     * Removes a deleted file's entry from cache and notifies listeners.
+     */
+    fun removeFileFromCache(filePath: String): List<TodoItem> {
+        cache.remove(filePath)
+        val allTodos = getCachedTodos()
+        try {
+            project.messageBus.syncPublisher(TodoChangeListener.TOPIC).onTodosUpdated(allTodos)
+        } catch (e: Exception) {
+            LOG.warn("Could not publish TodoChangeListener event", e)
+        }
+        return allTodos
+    }
+
+    /**
+     * Initiates or coalesces a background project scan.
+     * Guarantees at most ONE background task and progress window runs at any time.
+     */
+    fun requestProjectScan(onComplete: (List<TodoItem>) -> Unit = {}) {
+        if (isScanRunning.compareAndSet(false, true)) {
+            com.intellij.openapi.progress.ProgressManager.getInstance().run(
+                object : com.intellij.openapi.progress.Task.Backgroundable(project, "Scanning for TODOs", true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        activeIndicator = indicator
+                        try {
+                            val todos = scanProject(indicator)
+                            ApplicationManager.getApplication().invokeLater {
+                                onComplete(todos)
+                            }
+                        } finally {
+                            activeIndicator = null
+                            isScanRunning.set(false)
+                            if (pendingRescan.getAndSet(false)) {
+                                requestProjectScan(onComplete)
+                            }
+                        }
+                    }
+
+                    override fun onCancel() {
+                        activeIndicator = null
+                        isScanRunning.set(false)
+                    }
+                }
+            )
+        } else {
+            // Coalesce: another scan is currently active, mark pending to run upon completion
+            pendingRescan.set(true)
+        }
     }
 
     /**
@@ -38,6 +134,7 @@ class TodoScannerService(private val project: Project) {
     fun scanProject(indicator: ProgressIndicator? = null): List<TodoItem> {
         LOG.info("Starting project scan for TODOs")
         val todos = mutableListOf<TodoItem>()
+        val newCache = java.util.concurrent.ConcurrentHashMap<String, List<TodoItem>>()
         
         // Get all files in project scope
         val files = findAllFiles()
@@ -58,7 +155,21 @@ class TodoScannerService(private val project: Project) {
                 indicator.text2 = "Scanning file ${index + 1} of $totalFiles: ${file.name}"
             }
             
-            todos.addAll(scanFile(file))
+            val fileTodos = scanFile(file)
+            if (fileTodos.isNotEmpty()) {
+                newCache[file.path] = fileTodos
+            }
+            todos.addAll(fileTodos)
+        }
+        
+        cache.clear()
+        cache.putAll(newCache)
+        isCacheInitialized.set(true)
+
+        try {
+            project.messageBus.syncPublisher(TodoChangeListener.TOPIC).onTodosUpdated(todos)
+        } catch (e: Exception) {
+            LOG.warn("Could not publish TodoChangeListener event", e)
         }
         
         LOG.info("Project scan completed. Found ${todos.size} TODO items")

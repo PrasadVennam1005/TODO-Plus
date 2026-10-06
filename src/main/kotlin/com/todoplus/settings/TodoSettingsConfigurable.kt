@@ -8,11 +8,7 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.GridLayout
+import java.awt.*
 import javax.swing.*
 
 /**
@@ -31,8 +27,8 @@ class TodoSettingsConfigurable : Configurable {
     private lateinit var ignoredList: JBList<String>
 
     // Issue Tracker
-    private val issueUrlField = JTextField()
-    private val issuePatternField = JTextField()
+    private val issueUrlField = JTextField(25)
+    private val issuePatternField = JTextField(25)
     
     // Task Completion Behavior Settings
     private val markDoneRadioButton = JRadioButton("Mark as DONE in code (e.g. // DONE(...))")
@@ -43,29 +39,63 @@ class TodoSettingsConfigurable : Configurable {
     private val maxFileSizeSpinner = JSpinner(SpinnerNumberModel(5, 1, 100, 1))
 
     // GitHub REST Integration
-    private val githubTokenField = JPasswordField()
-    private val githubOwnerField = JTextField()
-    private val githubRepoField = JTextField()
+    private val githubTokenField = JPasswordField(25)
+    private val githubOwnerField = JTextField(25)
+    private val githubRepoField = JTextField(25)
 
     // Jira REST Integration
-    private val jiraUrlField = JTextField()
-    private val jiraEmailField = JTextField()
-    private val jiraTokenField = JPasswordField()
-    private val jiraProjectField = JTextField()
+    private val jiraUrlField = JTextField(25)
+    private val jiraEmailField = JTextField(25)
+    private val jiraTokenField = JPasswordField(25)
+    private val jiraProjectField = JTextField(25)
 
     // Webhooks
-    private val slackWebhookField = JTextField()
-    private val discordWebhookField = JTextField()
+    private val slackWebhookField = JTextField(25)
+    private val discordWebhookField = JTextField(25)
+
+    // AI Assistant
+    private val aiProviderComboBox = JComboBox(arrayOf("GEMINI", "OPENAI", "CLAUDE", "OLLAMA"))
+    private val aiApiKeyField = JPasswordField(25)
+    private val aiModelField = JTextField(25)
+    private val aiEndpointField = JTextField(25)
+    private val enablePreCommitCheck = JCheckBox("Inspect unlinked TODOs and prompt for Jira tickets before Git commit")
 
     private var isModified = false
 
     override fun getDisplayName(): String = "TODO++"
 
+    private fun createFormPanel(title: String, rows: List<Pair<String, JComponent>>): JPanel {
+        val panel = JPanel(GridBagLayout())
+        if (title.isNotBlank()) {
+            panel.border = BorderFactory.createTitledBorder(title)
+        }
+        val gbc = GridBagConstraints()
+        gbc.insets = Insets(4, 6, 4, 6)
+        rows.forEachIndexed { index, (labelText, component) ->
+            gbc.gridx = 0
+            gbc.gridy = index
+            gbc.weightx = 0.0
+            gbc.anchor = GridBagConstraints.WEST
+            gbc.fill = GridBagConstraints.NONE
+            panel.add(JLabel(labelText), gbc)
+
+            gbc.gridx = 1
+            gbc.gridy = index
+            gbc.weightx = 1.0
+            gbc.anchor = GridBagConstraints.WEST
+            gbc.fill = GridBagConstraints.HORIZONTAL
+            panel.add(component, gbc)
+        }
+        return panel
+    }
+
     override fun createComponent(): JComponent? {
         settingsPanel = JBPanel<JBPanel<*>>(BorderLayout())
         
-        val mainPanel = JPanel()
-        mainPanel.layout = BoxLayout(mainPanel, BoxLayout.Y_AXIS)
+        val mainPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = JBUI.Borders.empty(5)
+        }
         
         // --- Priority Settings ---
         val currentPriorities = TodoSettingsService.getInstance().getPriorities()
@@ -110,11 +140,10 @@ class TodoSettingsConfigurable : Configurable {
         val issuePanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createTitledBorder("Issue Tracker Integration")
             
-            val formPanel = JPanel(GridLayout(2, 2, 5, 5))
-            formPanel.add(JLabel("Issue URL Template:"))
-            formPanel.add(issueUrlField)
-            formPanel.add(JLabel("Issue ID Pattern (Regex):"))
-            formPanel.add(issuePatternField)
+            val formPanel = createFormPanel("", listOf(
+                "Issue URL Template:" to issueUrlField,
+                "Issue ID Pattern (Regex):" to issuePatternField
+            ))
             
             val hintLabel = JLabel("<html><small>Use <b>{id}</b> placeholder in URL. Example: https://github.com/user/repo/issues/<b>{id}</b></small></html>")
             hintLabel.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
@@ -125,64 +154,66 @@ class TodoSettingsConfigurable : Configurable {
         mainPanel.add(issuePanel)
 
         // --- GitHub REST Export Settings ---
-        val githubPanel = JPanel(GridLayout(3, 2, 5, 5)).apply {
-            border = BorderFactory.createTitledBorder("GitHub REST API Integration")
-            add(JLabel("Personal Access Token:"))
-            add(githubTokenField)
-            add(JLabel("Repository Owner / Org:"))
-            add(githubOwnerField)
-            add(JLabel("Repository Name:"))
-            add(githubRepoField)
-        }
+        val githubPanel = createFormPanel("GitHub REST API Integration", listOf(
+            "Personal Access Token:" to githubTokenField,
+            "Repository Owner / Org:" to githubOwnerField,
+            "Repository Name:" to githubRepoField
+        ))
         mainPanel.add(githubPanel)
 
         // --- Jira REST Export Settings ---
-        val jiraPanel = JPanel(GridLayout(4, 2, 5, 5)).apply {
-            border = BorderFactory.createTitledBorder("Jira Cloud REST API Integration")
-            add(JLabel("Jira Base URL:"))
-            add(jiraUrlField)
-            add(JLabel("Account Email:"))
-            add(jiraEmailField)
-            add(JLabel("API Token:"))
-            add(jiraTokenField)
-            add(JLabel("Project Key (e.g. PROJ):"))
-            add(jiraProjectField)
-        }
+        val jiraPanel = createFormPanel("Jira Cloud REST API Integration", listOf(
+            "Jira Base URL:" to jiraUrlField,
+            "Account Email:" to jiraEmailField,
+            "API Token:" to jiraTokenField,
+            "Project Key (e.g. PROJ):" to jiraProjectField
+        ))
         mainPanel.add(jiraPanel)
 
         // --- Webhook Alerts Settings ---
-        val webhookPanel = JPanel(GridLayout(2, 2, 5, 5)).apply {
-            border = BorderFactory.createTitledBorder("Overdue Webhook Alert Endpoints")
-            add(JLabel("Slack Webhook URL:"))
-            add(slackWebhookField)
-            add(JLabel("Discord Webhook URL:"))
-            add(discordWebhookField)
-        }
+        val webhookPanel = createFormPanel("Overdue Webhook Alert Endpoints", listOf(
+            "Slack Webhook URL:" to slackWebhookField,
+            "Discord Webhook URL:" to discordWebhookField
+        ))
         mainPanel.add(webhookPanel)
 
         // --- Scanning Limits Settings ---
-        val scanPanel = JPanel(GridLayout(1, 2, 5, 5)).apply {
-            border = BorderFactory.createTitledBorder("Scanning Performance Limits")
-            add(JLabel("Max File Size to Scan (MB):"))
-            add(maxFileSizeSpinner)
-        }
+        val scanPanel = createFormPanel("Scanning Performance Limits", listOf(
+            "Max File Size to Scan (MB):" to maxFileSizeSpinner
+        ))
         mainPanel.add(scanPanel)
         
         // --- Task Completion Behavior Settings ---
         completionGroup.add(markDoneRadioButton)
         completionGroup.add(deleteCommentRadioButton)
         
-        val completionPanel = JPanel(GridLayout(2, 1, 5, 5)).apply {
+        val completionPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
             border = BorderFactory.createTitledBorder("Task Completion Action")
             add(markDoneRadioButton)
             add(deleteCommentRadioButton)
         }
         mainPanel.add(completionPanel)
 
+        // --- AI Jira Assistant Settings ---
+        val aiPanel = createFormPanel("AI Jira Ticket Assistant", listOf(
+            "AI Provider:" to aiProviderComboBox,
+            "API Key:" to aiApiKeyField,
+            "Model Name:" to aiModelField,
+            "Custom Endpoint (for Ollama / Proxy):" to aiEndpointField,
+            "Pre-Commit Check:" to enablePreCommitCheck
+        ))
+        mainPanel.add(aiPanel)
+
         // --- Load Settings ---
         reset()
 
-        settingsPanel?.add(mainPanel, BorderLayout.CENTER)
+        val scrollPane = com.intellij.ui.components.JBScrollPane(
+            mainPanel,
+            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        )
+        settingsPanel?.add(scrollPane, BorderLayout.CENTER)
         
         return settingsPanel
     }
@@ -319,6 +350,13 @@ class TodoSettingsConfigurable : Configurable {
         // Check Webhooks
         if (slackWebhookField.text != settings.getState().slackWebhookUrl) return true
         if (discordWebhookField.text != settings.getState().discordWebhookUrl) return true
+
+        // Check AI Settings
+        if (aiProviderComboBox.selectedItem != settings.getState().aiProvider) return true
+        if (String(aiApiKeyField.password) != settings.getState().aiApiKey) return true
+        if (aiModelField.text != settings.getState().aiModelName) return true
+        if (aiEndpointField.text != settings.getState().aiCustomEndpoint) return true
+        if (enablePreCommitCheck.isSelected != settings.getState().enablePreCommitTodoCheck) return true
         
         // Check completion behavior
         val selectedBehavior = if (deleteCommentRadioButton.isSelected) TodoSettingsService.BEHAVIOR_DELETE_COMMENT else TodoSettingsService.BEHAVIOR_MARK_DONE
@@ -352,6 +390,12 @@ class TodoSettingsConfigurable : Configurable {
         settings.getState().slackWebhookUrl = slackWebhookField.text.trim()
         settings.getState().discordWebhookUrl = discordWebhookField.text.trim()
 
+        settings.getState().aiProvider = (aiProviderComboBox.selectedItem as? String) ?: "GEMINI"
+        settings.getState().aiApiKey = String(aiApiKeyField.password).trim()
+        settings.getState().aiModelName = aiModelField.text.trim()
+        settings.getState().aiCustomEndpoint = aiEndpointField.text.trim()
+        settings.getState().enablePreCommitTodoCheck = enablePreCommitCheck.isSelected
+
         settings.getState().completionBehavior = if (deleteCommentRadioButton.isSelected) TodoSettingsService.BEHAVIOR_DELETE_COMMENT else TodoSettingsService.BEHAVIOR_MARK_DONE
         
         isModified = false
@@ -383,6 +427,12 @@ class TodoSettingsConfigurable : Configurable {
 
         slackWebhookField.text = settings.getState().slackWebhookUrl
         discordWebhookField.text = settings.getState().discordWebhookUrl
+
+        aiProviderComboBox.selectedItem = settings.getState().aiProvider
+        aiApiKeyField.text = settings.getState().aiApiKey
+        aiModelField.text = settings.getState().aiModelName
+        aiEndpointField.text = settings.getState().aiCustomEndpoint
+        enablePreCommitCheck.isSelected = settings.getState().enablePreCommitTodoCheck
 
         if (settings.getState().completionBehavior == TodoSettingsService.BEHAVIOR_DELETE_COMMENT) {
             deleteCommentRadioButton.isSelected = true

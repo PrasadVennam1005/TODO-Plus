@@ -4,6 +4,24 @@ All notable changes to **TODO++** will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] – 2026-10-06
+
+### 🔄 Real-Time Sync, Centralized Cache & Single-Flight Scanning
+- **Centralized Project TODO Cache**: Implemented in-memory thread-safe cache (`ConcurrentHashMap<String, List<TodoItem>>`) inside `TodoScannerService` as the single source of truth across the project.
+- **Single-Flight Scan Coalescer**: Eliminates duplicate "Scanning for TODOs" background tasks and progress windows. Multiple rapid scan requests coalesce into at most one active and one pending background task.
+- **Incremental File Scanning**: Editing or saving an open file in the editor now triggers a sub-10ms single-file scan and incremental cache update, completely eliminating redundant full-project re-scans during live typing.
+- **Multi-Window Sync (`TodoChangeListener`)**: Project-wide `MessageBus` topic automatically broadcasts cache changes to all open tool windows and views, keeping them in 100% synchronization without out-of-order overwrites.
+- **Project Scope Isolation**: Document listeners verify `ProjectFileIndex.isInContent(file)` to ignore external files, preventing false re-scans in multi-project or split environments.
+
+### 🤖 AI-Powered Jira Ticket Assistant & VCS Pre-Commit Guard
+- **Multi-Provider LLM Integration**: Support for Google Gemini, OpenAI, Anthropic Claude, and Ollama/Local OpenAI-compatible models to analyze unlinked TODOs.
+- **Context-Aware Ticket Generation**: Automatically extracts surrounding code context ($\pm 15$ lines) and TODO metadata to generate structured ticket summaries, descriptions, issue types, and acceptance criteria.
+- **Interactive Review Modal (`AiJiraTicketDialog`)**: Modal preview dialog allowing developers to inspect and edit AI-generated ticket fields before submission.
+- **1-Click Create & In-Place Code Linking**: Creates the Jira Cloud issue via REST API and automatically updates the source code comment in-place with the assigned ticket key (e.g. `// TODO(issue:PROJ-101): ...`).
+- **VCS Pre-Commit Hook (`TodoCheckinHandlerFactory`)**: Warns developers during Git commit if unlinked TODO comments are detected in staged files, preventing forgotten or orphaned TODOs from crossing sprints.
+
+---
+
 ## [2.3.0] – 2026-08-13
 
 ### 🚀 Issue Tracker REST Integration & Webhooks

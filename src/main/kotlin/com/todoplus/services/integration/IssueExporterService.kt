@@ -33,8 +33,7 @@ object IssueExporterService {
             val jsonPayload = """
                 {
                   "title": ${escapeJsonString(title)},
-                  "body": ${escapeJsonString(body)},
-                  "labels": ["todo-plus"]
+                  "body": ${escapeJsonString(body)}
                 }
             """.trimIndent()
 
@@ -43,6 +42,8 @@ object IssueExporterService {
                 .header("Authorization", "Bearer $token")
                 .header("Accept", "application/vnd.github+json")
                 .header("Content-Type", "application/json")
+                .header("User-Agent", "TODO-Plus-IntelliJ-Plugin")
+                .header("X-GitHub-Api-Version", "2022-11-28")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build()
 
@@ -51,6 +52,12 @@ object IssueExporterService {
             if (response.statusCode() in 200..299) {
                 val htmlUrl = extractJsonField(response.body(), "html_url") ?: "https://github.com/$owner/$repo/issues"
                 Result.success(htmlUrl)
+            } else if (response.statusCode() == 403 && response.body().contains("Resource not accessible by personal access token")) {
+                Result.failure(RuntimeException(
+                    "GitHub Token lacks permission to create issues in '$owner/$repo'. " +
+                    "For Fine-grained tokens: grant Repository permissions -> 'Issues: Read and write'. " +
+                    "For Classic tokens: ensure the 'repo' scope is checked."
+                ))
             } else {
                 Result.failure(RuntimeException("GitHub API returned status ${response.statusCode()}: ${response.body()}"))
             }
@@ -63,39 +70,39 @@ object IssueExporterService {
      * Create issue on Jira Cloud via REST API
      * POST https://{baseUrl}/rest/api/3/issue
      */
-    fun createJiraIssue(todo: TodoItem, baseUrl: String, email: String, apiToken: String, projectKey: String): Result<String> {
+    fun createJiraIssue(
+        todo: TodoItem,
+        baseUrl: String,
+        email: String,
+        apiToken: String,
+        projectKey: String,
+        customSummary: String? = null,
+        customDescription: String? = null,
+        customIssueType: String? = null
+    ): Result<String> {
         if (baseUrl.isBlank() || email.isBlank() || apiToken.isBlank() || projectKey.isBlank()) {
             return Result.failure(IllegalArgumentException("Jira credentials (baseUrl, email, apiToken, projectKey) must be configured in Settings."))
         }
 
         return try {
             val cleanBaseUrl = baseUrl.trimEnd('/')
-            val url = "$cleanBaseUrl/rest/api/3/issue"
-            val summary = todo.description.substringBefore('\n')
+            val url = "$cleanBaseUrl/rest/api/2/issue"
+            val summary = customSummary?.takeIf { it.isNotBlank() } ?: todo.description.substringBefore('\n')
             val authHeader = "Basic " + Base64.getEncoder().encodeToString("$email:$apiToken".toByteArray())
-            val bodyText = buildIssueBody(todo)
+            val bodyText = customDescription?.takeIf { it.isNotBlank() } ?: buildIssueBody(todo)
+            val issueType = customIssueType?.takeIf { it.isNotBlank() } ?: "Task"
 
             val jsonPayload = """
                 {
                   "fields": {
                     "project": { "key": ${escapeJsonString(projectKey)} },
                     "summary": ${escapeJsonString(summary)},
-                    "description": {
-                      "type": "doc",
-                      "version": 1,
-                      "content": [
-                        {
-                          "type": "paragraph",
-                          "content": [
-                            { "type": "text", "text": ${escapeJsonString(bodyText)} }
-                          ]
-                        }
-                      ]
-                    },
-                    "issuetype": { "name": "Task" }
+                    "description": ${escapeJsonString(bodyText)},
+                    "issuetype": { "name": ${escapeJsonString(issueType)} }
                   }
                 }
             """.trimIndent()
+
 
             val request = HttpRequest.newBuilder()
                 .uri(URI.create(url))

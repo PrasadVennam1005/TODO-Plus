@@ -34,6 +34,9 @@ import com.intellij.util.ui.JBUI
 import com.todoplus.exporter.TodoExporter
 import com.todoplus.models.TodoItem
 import com.todoplus.services.TodoScannerService
+import com.todoplus.services.ai.AiProvider
+import com.todoplus.services.ai.AiTicketSuggestionService
+import com.todoplus.ui.dialogs.AiJiraTicketDialog
 import com.todoplus.ui.tree.TodoGroupBy
 import com.todoplus.ui.tree.TodoTreeModelBuilder
 import com.todoplus.ui.tree.TodoTreeTableColumns
@@ -53,9 +56,11 @@ import com.intellij.util.Alarm
 class TodoToolWindowContent(private val project: Project) : Disposable {
 
     private val filterAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+    private val incrementalAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
     override fun dispose() {
         filterAlarm.cancelAllRequests()
+        incrementalAlarm.cancelAllRequests()
     }
 
         private val treeTable: TreeTableView
@@ -174,7 +179,7 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                 override fun actionPerformed(e: AnActionEvent) { performScan() }
             })
             addSeparator()
-            add(object : AnAction("Mark Completed", "Mark selected TODOs as completed (Tick)", AllIcons.Actions.Commit) {
+            add(object : AnAction("Mark Completed", "Mark selected TODOs as completed", AllIcons.Actions.Checked) {
                 override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
                 override fun actionPerformed(e: AnActionEvent) {
                     val todos = getSelectedTodos()
@@ -183,7 +188,7 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                     }
                 }
             })
-            add(object : AnAction("Mark Incomplete", "Mark selected TODOs as incomplete (Cross)", AllIcons.Actions.Cancel) {
+            add(object : AnAction("Mark Incomplete", "Mark selected TODOs as incomplete", AllIcons.Actions.Cancel) {
                 override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
                 override fun actionPerformed(e: AnActionEvent) {
                     val todos = getSelectedTodos()
@@ -202,44 +207,62 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                 }
             })
             addSeparator()
-            add(object : AnAction("Export CSV", "Export TODOs to CSV file", AllIcons.ToolbarDecorator.Export) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportTodos("csv") }
-            })
-            add(object : AnAction("Export Markdown", "Export TODOs to Markdown file", AllIcons.FileTypes.Text) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportTodos("md") }
-            })
-            add(object : AnAction("Export HTML Dashboard", "Generate and open HTML Dashboard", AllIcons.FileTypes.Html) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportTodos("html") }
-            })
-            add(object : AnAction("Export PDF Report", "Generate printable PDF report", AllIcons.Actions.MenuOpen) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportTodos("pdf") }
-            })
-            add(object : AnAction("Copy for Standup", "Copy formatted TODO list to Clipboard for Slack/Teams standup", AllIcons.Actions.Copy) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { copyForStandup() }
-            })
-            addSeparator()
-            add(object : AnAction("Export Task to GitHub Issue", "Create a new issue on GitHub for selected TODO", AllIcons.Vcs.Vendors.Github) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportSelectedToGitHubIssue() }
-            })
-            add(object : AnAction("Export Task to Jira Issue", "Create a new issue on Jira for selected TODO", AllIcons.Actions.Commit) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { exportSelectedToJiraIssue() }
-            })
-            add(object : AnAction("Send Overdue Webhook Alerts", "Send Slack / Discord alerts for overdue tasks", AllIcons.General.Warning) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { sendOverdueWebhookAlerts() }
-            })
-            addSeparator()
-            add(object : AnAction("Clear Filters", "Clear all search filters", AllIcons.Actions.GC) {
-                override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-                override fun actionPerformed(e: AnActionEvent) { clearFilters() }
-            })
+            val exportGroup = DefaultActionGroup("Export", true).apply {
+                templatePresentation.icon = AllIcons.ToolbarDecorator.Export
+                templatePresentation.text = "Export"
+                add(object : AnAction("Export CSV", "Export TODOs to CSV file", AllIcons.ToolbarDecorator.Export) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportTodos("csv") }
+                })
+                add(object : AnAction("Export Markdown", "Export TODOs to Markdown file", AllIcons.FileTypes.Text) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportTodos("md") }
+                })
+                add(object : AnAction("Export HTML Dashboard", "Generate and open HTML Dashboard", AllIcons.FileTypes.Html) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportTodos("html") }
+                })
+                add(object : AnAction("Export PDF Report", "Generate printable PDF report", AllIcons.Actions.MenuOpen) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportTodos("pdf") }
+                })
+                add(object : AnAction("Copy for Standup", "Copy formatted TODO list to Clipboard for Slack/Teams standup", AllIcons.Actions.Copy) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { copyForStandup() }
+                })
+            }
+            add(exportGroup)
+            val integrationsGroup = DefaultActionGroup("Integrations", true).apply {
+                templatePresentation.icon = AllIcons.Vcs.Vendors.Github
+                templatePresentation.text = "Integrations"
+                add(object : AnAction("Export Task to GitHub Issue", "Create a new issue on GitHub for selected TODO", AllIcons.Vcs.Vendors.Github) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportSelectedToGitHubIssue() }
+                })
+                add(object : AnAction("Export Task to Jira Issue", "Create a new issue on Jira for selected TODO", AllIcons.General.Web) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { exportSelectedToJiraIssue() }
+                })
+                add(object : AnAction("Suggest Jira Ticket with AI", "Draft Jira ticket details using AI and link to code", AllIcons.Toolwindows.ToolWindowInspection) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) {
+                        val todo = getSelectedTodo()
+                        if (todo != null) {
+                            suggestJiraTicketWithAi(todo)
+                        } else {
+                            NotificationGroupManager.getInstance()
+                                .getNotificationGroup("TODO++ Notifications")
+                                .createNotification("Please select a TODO item to analyze with AI.", NotificationType.WARNING)
+                                .notify(project)
+                        }
+                    }
+                })
+                add(object : AnAction("Send Overdue Webhook Alerts", "Send Slack / Discord alerts for overdue tasks", AllIcons.Toolwindows.Notifications) {
+                    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+                    override fun actionPerformed(e: AnActionEvent) { sendOverdueWebhookAlerts() }
+                })
+            }
+            add(integrationsGroup)
             addSeparator()
             add(object : AnAction("Expand All", "Expand all groups", AllIcons.Actions.Expandall) {
                 override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -260,10 +283,15 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
 
         // Create main panel using SimpleToolWindowPanel
         mainPanel = SimpleToolWindowPanel(true).apply {
-            val topPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+            val topPanel = JBPanel<JBPanel<*>>().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
                 border = JBUI.Borders.customLineBottom(Gray._200)
-                add(actionToolbar.component, BorderLayout.WEST)
-                add(filterPanel, BorderLayout.CENTER)
+
+                val toolbarRow = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+                    add(actionToolbar.component, BorderLayout.WEST)
+                }
+                add(toolbarRow)
+                add(filterPanel)
             }
             
             toolbar = topPanel
@@ -282,6 +310,15 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         
         // Populate priority filter
         updatePriorityFilter()
+
+        // Populate from centralized cache if already scanned
+        val scanner = project.service<TodoScannerService>()
+        if (scanner.isCacheInitialized()) {
+            allTodos.clear()
+            allTodos.addAll(scanner.getCachedTodos())
+            applyFilters()
+            updateStatistics()
+        }
     }
     
     private fun updatePriorityFilter() {
@@ -315,12 +352,12 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
     }
 
     private fun createFilterPanel(): JPanel {
-        val panel = JPanel(FlowLayout(FlowLayout.RIGHT, 10, 2)).apply {
-            border = JBUI.Borders.empty(2, 5)
+        val panel = JPanel(FlowLayout(FlowLayout.LEFT, 8, 2)).apply {
+            border = JBUI.Borders.empty(2, 4)
         }
 
         // Group By dropdown
-        panel.add(JLabel("Group By:"))
+        panel.add(JLabel("Group:"))
         groupByDropdown.addActionListener { applyFilters() }
         panel.add(groupByDropdown)
 
@@ -336,20 +373,20 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
 
         // Assignee filter
         panel.add(JLabel("Person:"))
-        assigneeFilter.columns = 8
+        assigneeFilter.columns = 6
         assigneeFilter.toolTipText = "Author/Assignee..."
         panel.add(assigneeFilter)
 
         // Category filter
         panel.add(JLabel("Category:"))
-        categoryFilter.columns = 8
+        categoryFilter.columns = 6
         categoryFilter.toolTipText = "Bug/Feature..."
         panel.add(categoryFilter)
         
         // Search text field (Premium UI)
         searchField.toolTipText = "Search description..."
         panel.add(searchField)
-        
+
         // Apply filter with 200ms debounce to keep UI fluid on large datasets
         val debouncedApply = {
             filterAlarm.cancelAllRequests()
@@ -365,20 +402,17 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         assigneeFilter.document.addDocumentListener(docListener)
         categoryFilter.document.addDocumentListener(docListener)
         searchField.textEditor.document.addDocumentListener(docListener)
-        
-        val applyAction = java.awt.event.ActionListener { applyFilters() }
-        assigneeFilter.addActionListener(applyAction)
-        categoryFilter.addActionListener(applyAction)
-        searchField.textEditor.addActionListener(applyAction)
 
-        val filterButton = JButton("Apply").apply {
-            addActionListener(applyAction)
+        val clearFilterButton = JButton("Clear").apply {
+            addActionListener { clearFilters() }
             isOpaque = false
+            toolTipText = "Reset all filters"
         }
-        panel.add(filterButton)
+        panel.add(clearFilterButton)
 
         return panel
     }
+
 
     fun getContent(): JComponent = mainPanel
 
@@ -426,32 +460,17 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
     }
 
     private fun scanProject() {
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Scanning for TODOs", true) {
-            override fun run(indicator: ProgressIndicator) {
-                // Background thread
-                indicator.text = "Scanning project files..."
-                indicator.isIndeterminate = true
-                
-                try {
-                    val scanner = project.service<TodoScannerService>()
-                    // Run scanning (service handles Read Actions internally and updates progress indicator)
-                    val foundTodos = scanner.scanProject(indicator)
-                    
-                    // Update UI on EDT
-                    ApplicationManager.getApplication().invokeLater {
-                        allTodos.clear()
-                        allTodos.addAll(foundTodos)
-                        
-                        applyFilters()
-                        updateStatistics()
-                    }
-                } catch (e: Exception) {
-                    ApplicationManager.getApplication().invokeLater {
-                        statusLabel.text = "Error scanning project: ${e.message}"
-                    }
-                }
+        statusLabel.text = "Scanning project files..."
+        val scanner = project.service<TodoScannerService>()
+        scanner.requestProjectScan { foundTodos ->
+            if (scopeDropdown.selectedItem != "Current File") {
+                allTodos.clear()
+                allTodos.addAll(foundTodos)
+                applyFilters()
+                updateStatistics()
+                statusLabel.text = "Ready."
             }
-        })
+        }
     }
 
     private fun applyFilters() {
@@ -699,6 +718,14 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
             val navigateItem = JMenuItem("Navigate to Code")
             navigateItem.addActionListener { navigateTo(todo) }
             popup.add(navigateItem)
+
+            val exportJiraItem = JMenuItem("Export Task to Jira Issue", AllIcons.General.Web)
+            exportJiraItem.addActionListener { exportSelectedToJiraIssue(todo) }
+            popup.add(exportJiraItem)
+
+            val aiTicketItem = JMenuItem("Suggest Jira Ticket with AI", AllIcons.Toolwindows.ToolWindowInspection)
+            aiTicketItem.addActionListener { suggestJiraTicketWithAi(todo) }
+            popup.add(aiTicketItem)
             
             val issueId = todo.issueId
             val settings = com.todoplus.settings.TodoSettingsService.getInstance().getState()
@@ -848,38 +875,77 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
      */
     private fun setupAutoRefresh() {
         val connection: MessageBusConnection = project.messageBus.connect(this)
+        val scanner = project.service<TodoScannerService>()
         
-        // Debounce timer (500ms) to prevent rapid refreshes while typing
-        val refreshTimer = Timer(500) {
-            ApplicationManager.getApplication().invokeLater {
-                performScan()
-            }
-        }
-        refreshTimer.isRepeats = false
-        
-        // 1. Listen to Virtual File System changes (on disk save/external edits)
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-            override fun after(events: List<VFileEvent>) {
-                val relevantChanges = events.any { event ->
-                    val file = event.file
-                    file != null && isValidFileType(file)
-                }
-                
-                if (relevantChanges) {
-                    refreshTimer.restart()
+        // 1. Subscribe to project-wide cache updates from TodoScannerService (Multi-Window Sync)
+        connection.subscribe(com.todoplus.services.TodoChangeListener.TOPIC, object : com.todoplus.services.TodoChangeListener {
+            override fun onTodosUpdated(todos: List<TodoItem>) {
+                ApplicationManager.getApplication().invokeLater {
+                    if (scopeDropdown.selectedItem != "Current File") {
+                        allTodos.clear()
+                        allTodos.addAll(todos)
+                        applyFilters()
+                        updateStatistics()
+                        statusLabel.text = "Ready."
+                    }
                 }
             }
         })
 
-        // 2. Listen to live editor typing/editing in open documents
-        val docListener = object : com.intellij.openapi.editor.event.DocumentListener {
-            override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
-                val file = com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getFile(event.document)
-                if (file != null && isValidFileType(file)) {
-                    refreshTimer.restart()
+
+        // 2. Listen to Virtual File System changes (on disk save/external edits/deletions)
+        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            override fun after(events: List<VFileEvent>) {
+                val fileIndex = com.intellij.openapi.roots.ProjectFileIndex.getInstance(project)
+                for (event in events) {
+                    val file = event.file
+                    if (file != null && isValidFileType(file) && fileIndex.isInContent(file) && !fileIndex.isExcluded(file)) {
+                        if (scanner.isCacheInitialized()) {
+                            ApplicationManager.getApplication().executeOnPooledThread {
+                                scanner.updateFileCache(file)
+                            }
+                        } else {
+                            performScan()
+                            break
+                        }
+                    } else if (event is com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent) {
+                        scanner.removeFileFromCache(event.path)
+                    }
                 }
             }
+        })
+
+        // 3. Listen to live editor typing/editing in open documents (incremental scanning)
+        val docListener = object : com.intellij.openapi.editor.event.DocumentListener {
+            override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
+                val file = com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getFile(event.document) ?: return
+                if (!isValidFileType(file)) return
+                
+                val fileIndex = com.intellij.openapi.roots.ProjectFileIndex.getInstance(project)
+                if (!fileIndex.isInContent(file) || fileIndex.isExcluded(file)) return
+
+                if (scopeDropdown.selectedItem == "Current File") {
+                    incrementalAlarm.cancelAllRequests()
+                    incrementalAlarm.addRequest({
+                        ApplicationManager.getApplication().invokeLater {
+                            scanCurrentFile()
+                        }
+                    }, 300)
+                    return
+                }
+
+                if (!scanner.isCacheInitialized()) {
+                    performScan()
+                    return
+                }
+
+                incrementalAlarm.cancelAllRequests()
+                incrementalAlarm.addRequest({
+                    scanner.updateFileCache(file)
+                }, 300)
+            }
         }
+
         com.intellij.openapi.editor.EditorFactory.getInstance().eventMulticaster.addDocumentListener(docListener, connection)
     }
     
@@ -892,9 +958,16 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
     private fun getSelectedTodo(): TodoItem? {
         val selectedRow = treeTable.selectedRow
         if (selectedRow < 0) return null
-        val node = treeTable.getValueAt(selectedRow, 0)
-        if (node is DefaultMutableTreeNode && node.userObject is TodoItem) {
-            return node.userObject as TodoItem
+        val node = treeTable.tree.getPathForRow(selectedRow)?.lastPathComponent as? DefaultMutableTreeNode
+        val userObject = node?.userObject
+        if (userObject is TodoItem) {
+            return userObject
+        }
+        if (node != null && node.childCount > 0) {
+            val firstChild = node.getChildAt(0) as? DefaultMutableTreeNode
+            if (firstChild?.userObject is TodoItem) {
+                return firstChild.userObject as TodoItem
+            }
         }
         return null
     }
@@ -934,8 +1007,8 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         })
     }
 
-    private fun exportSelectedToJiraIssue() {
-        val todo = getSelectedTodo()
+    private fun exportSelectedToJiraIssue(targetTodo: TodoItem? = null) {
+        val todo = targetTodo ?: getSelectedTodo()
         if (todo == null) {
             NotificationGroupManager.getInstance()
                 .getNotificationGroup("TODO++ Notifications")
@@ -945,9 +1018,18 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
         }
 
         val settings = com.todoplus.settings.TodoSettingsService.getInstance().getState()
+        if (settings.jiraBaseUrl.isBlank() || settings.jiraEmail.isBlank() || settings.jiraApiToken.isBlank() || settings.jiraProjectKey.isBlank()) {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("TODO++ Notifications")
+                .createNotification("Please configure your Jira Cloud credentials in Settings > Tools > TODO++ first.", NotificationType.WARNING)
+                .notify(project)
+            return
+        }
+
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Exporting to Jira Issue", true) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
+                indicator.text = "Creating issue in Jira (${settings.jiraProjectKey})..."
                 val result = com.todoplus.services.integration.IssueExporterService.createJiraIssue(
                     todo, settings.jiraBaseUrl, settings.jiraEmail, settings.jiraApiToken, settings.jiraProjectKey
                 )
@@ -963,6 +1045,85 @@ class TodoToolWindowContent(private val project: Project) : Disposable {
                             .getNotificationGroup("TODO++ Notifications")
                             .createNotification("Jira Issue Export Failed: ${ex.message}", NotificationType.ERROR)
                             .notify(project)
+                    }
+                }
+            }
+        })
+    }
+
+    private fun suggestJiraTicketWithAi(targetTodo: TodoItem? = null) {
+        val todo = targetTodo ?: getSelectedTodo()
+        if (todo == null) {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("TODO++ Notifications")
+                .createNotification("Please select a TODO item to analyze with AI.", NotificationType.WARNING)
+                .notify(project)
+            return
+        }
+
+        val settings = com.todoplus.settings.TodoSettingsService.getInstance().getState()
+        if (settings.aiApiKey.isBlank() && settings.aiProvider != "ollama") {
+            // Open interactive review dialog directly with the TODO details pre-filled!
+            val fallbackSuggestion = com.todoplus.services.ai.AiTicketSuggestion(
+                summary = "[TODO] ${todo.description.substringBefore('\n')}",
+                description = "Task extracted from code:\n\n" +
+                        "File: ${todo.filePath} (Line ${todo.lineNumber})\n" +
+                        (if (todo.priority != null) "Priority: ${todo.priority.name}\n" else "") +
+                        (if (todo.assignee != null) "Assignee: @${todo.assignee}\n" else "") +
+                        "\nDetails:\n${todo.description}",
+                issueType = "Task",
+                priority = todo.priority?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Medium"
+            )
+            val dialog = AiJiraTicketDialog(project, todo, fallbackSuggestion) {
+                performScan()
+            }
+            dialog.show()
+            return
+        }
+
+        val provider = try {
+            AiProvider.valueOf(settings.aiProvider.uppercase())
+        } catch (ex: Exception) {
+            AiProvider.GEMINI
+        }
+
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Drafting Jira Ticket with AI...", true) {
+            override fun run(indicator: ProgressIndicator) {
+                indicator.isIndeterminate = true
+                indicator.text = "Extracting context and prompting ${provider.displayName}..."
+
+                val enclosingCode = AiTicketSuggestionService.extractEnclosingCode(project, todo)
+                val result = AiTicketSuggestionService.generateTicketSuggestion(
+                    todo = todo,
+                    enclosingCode = enclosingCode,
+                    provider = provider,
+                    apiKey = settings.aiApiKey,
+                    modelName = settings.aiModelName,
+                    customEndpoint = settings.aiCustomEndpoint
+                )
+
+                ApplicationManager.getApplication().invokeLater {
+                    result.onSuccess { suggestion ->
+                        val dialog = AiJiraTicketDialog(project, todo, suggestion) {
+                            performScan()
+                        }
+                        dialog.show()
+                    }.onFailure { ex ->
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup("TODO++ Notifications")
+                            .createNotification("AI Suggestion Failed: ${ex.message}. Opening standard ticket dialog.", NotificationType.WARNING)
+                            .notify(project)
+
+                        val fallbackSuggestion = com.todoplus.services.ai.AiTicketSuggestion(
+                            summary = "[TODO] ${todo.description.substringBefore('\n')}",
+                            description = "Task extracted from code:\n\nFile: ${todo.filePath} (Line ${todo.lineNumber})\n\n${todo.description}",
+                            issueType = "Task",
+                            priority = "Medium"
+                        )
+                        val dialog = AiJiraTicketDialog(project, todo, fallbackSuggestion) {
+                            performScan()
+                        }
+                        dialog.show()
                     }
                 }
             }
